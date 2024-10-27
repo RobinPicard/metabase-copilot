@@ -16,4 +16,5 @@
   font-size: 0.75rem;
   line-height: 1.125rem;
   font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, "Source Code Pro", source-code-pro, monospace;
+  pointer-events: none;
 }

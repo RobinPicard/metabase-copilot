@@ -1,35 +1,33 @@
 const path = require('path');
+const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = {
   entry: {
+    popup: './src/popup/popup.tsx',
     background: './src/background.ts',
-    content: './src/content/content.ts',
     injectedScriptStoreUpdates: './src/content/injectedScriptStoreUpdates.ts',
-    popup: './src/popup/popup.ts'
-  },
-  resolve: {
-    extensions: ['.tsx', '.ts', '.js'],
+    content: './src/content/content.ts',
+    options: './src/options/options.tsx',
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: '[name].js',
   },
-  plugins: [
-    new HtmlWebpackPlugin({
-      template: './src/popup/popup.html',
-      filename: 'popup.html',
-      chunks: ['popup'],
-    }),
-    new MiniCssExtractPlugin({
-      filename: '[name].css',
-    }),
-  ],
   module: {
     rules: [
       {
-        test: /\.(png|gif)$/,
+        test: /\.(ts|tsx)$/,
+        use: 'ts-loader',
+        exclude: /node_modules/,
+      },
+      {
+        test: /\.css$/,
+        use: [MiniCssExtractPlugin.loader, 'css-loader'],
+      },
+      {
+        test: /\.(png|jpg|jpeg|gif|svg)$/i,
         use: [
           {
             loader: 'file-loader',
@@ -42,25 +40,25 @@ module.exports = {
           }
         ]
       },
-      {
-        test: /\.tsx?$/,
-        use: 'ts-loader',
-        exclude: /node_modules/,
-      },
-      {
-        test: /\.js$/,
-        exclude: /node_modules/,
-        use: {
-          loader: 'babel-loader',
-          options: {
-            presets: ['@babel/preset-env'],
-          },
-        },
-      },
-      {
-        test: /\.css$/,
-        use: [MiniCssExtractPlugin.loader, 'css-loader'],
-      },
-    ]
+    ],
   },
+  resolve: {
+    extensions: ['.tsx', '.ts', '.js'],
+  },
+  plugins: [
+    new HtmlWebpackPlugin({
+      template: './src/popup/popup.html',
+      filename: 'popup.html',
+      chunks: ['popup'],
+    }),
+    new HtmlWebpackPlugin({
+      template: './src/options/options.html',
+      filename: 'options.html',
+      chunks: ['options'],
+    }),
+    new MiniCssExtractPlugin(),
+    new webpack.DefinePlugin({
+      __FIREBASE_ENV__: JSON.stringify(process.env.FIREBASE_ENV || 'dev')
+    })
+  ],
 };

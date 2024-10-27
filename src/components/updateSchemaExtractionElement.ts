@@ -28,19 +28,27 @@ tooltipElement.className = 'tooltip'
 updateSchemaExtractionElement.appendChild(imageElement)
 updateSchemaExtractionElement.appendChild(tooltipElement)
 
+updateSchemaExtractionElement.addEventListener('click', () => {
+  updateSchemaExtractionElement.classList.add('clicked');
+});
+
+updateSchemaExtractionElement.addEventListener('mouseleave', () => {
+  updateSchemaExtractionElement.classList.remove('clicked');
+});
+
 // Create a MutationObserver instance to watch for attribute changes on the parent element
 const observer = new MutationObserver((mutations) => {
   mutations.forEach((mutation) => {
-    if (mutation.type === "attributes" && ["animate", "schema_extracted_at"].includes(mutation.attributeName)) {
-      const dataValue = updateSchemaExtractionElement.getAttribute(mutation.attributeName);
-      data = {...data, [mutation.attributeName]: dataValue};
+    if (mutation.type === "attributes" && ["animate", "schema_extracted_at"].includes(mutation.attributeName || "")) {
+      const dataValue = updateSchemaExtractionElement.getAttribute(mutation.attributeName || "");
+      data = {...data, [mutation.attributeName || ""]: dataValue};
       if (data.animate === 'true') {
         imageElement.src = chrome.runtime.getURL(loadGif);
         tooltipElement.innerHTML = "Database schema extraction is ongoing. Please do not close the tab."
       } else {
         imageElement.src = chrome.runtime.getURL(loadImage);
         tooltipElement.innerHTML = (
-          `Database schema extraction last ran on ${data.schema_extracted_at}. Click here to re-run.`
+          `Rerun the database schema extraction`
         );
       }
     }

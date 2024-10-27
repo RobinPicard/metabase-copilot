@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Metabase-ChatGPT",
-  "version": "2.0",
-  "description": "Lets ChatGPT write SQL queries and analyze errors for you in Metabase.",
+  "name": "Metabase Copilot",
+  "version": "3.0",
+  "description": "AI assistant for Metabase",
   "icons": {
     "128": "chrome_icons/icon128.png",
     "48": "chrome_icons/icon48.png"
@@ -12,7 +12,8 @@
     "storage",
     "tabs",
     "webNavigation",
-    "unlimitedStorage"
+    "unlimitedStorage",
+    "identity"
   ],
   "host_permissions": [
     "*://*/question*"
@@ -22,17 +23,37 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["dist/assets/*", "dist/injectedScriptStoreUpdates.js"],
+      "resources": [
+        "dist/assets/*",
+        "dist/injectedScriptStoreUpdates.js",
+        "dist/*.png",
+        "dist/*.jpg",
+        "dist/*.jpeg",
+        "dist/*.gif",
+        "dist/*.svg"
+      ],
       "matches": ["<all_urls>"]
     }
   ],
   "action": {
     "default_popup": "dist/popup.html"
   },
+  "options_page": "dist/options.html",
   "content_scripts": [
     {
       "matches": ["*://*/question*"],
+      "js": ["dist/content.js"],
       "css": ["dist/content.css"]
     }
-  ]
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self';"
+  },
+  "oauth2": {
+    "client_id": "263144475527-5glkr0cdbde0imu9ga2tj4c7mqgasql8.apps.googleusercontent.com",
+    "scopes": [
+      "profile",
+      "email"
+    ]
+  }
 }

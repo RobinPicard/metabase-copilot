@@ -1,14 +1,15 @@
-# Metabase - chatGPT
+# Metabase Copilot
 
 ## Introduction
 
-Metabase-ChatGPT is a Google Chrome extension allowing users to benefit from Openai's ChatGPT within Metabase. Thus, the use of this extension requires having a credited Openai account as you'll need to provide an api key. On that topic, the extension stores the user's api key in Chrome's storage. Make sure that you're fine with that security-wise before starting to use Metabase - chatGPT. All featurs offered by Metabase-ChatGPT are made for the native query editor page of Metabase.
+Metabase Copilot is a Google Chrome extension allowing users to benefit from generative AI within Metabase.
 
 ## Features
 
-Metabase-ChatGPT has 2 main features:
+Metabase Copilot has 3 main features:
 - query prompt: allows the user to enter a prompt for a SQL query creation/edition
 - database error explanation: asks chatGPT to give the most likely explanation for the error considering the query that was run and the error returned
+- database error fix: asks chatGPT to modify the user's query to fix the error
 
 ## Installation and Use
 

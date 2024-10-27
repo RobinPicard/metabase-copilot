@@ -3,18 +3,25 @@ import promptQueryPopupElement from '../components/promptQueryPopupElement'
 import revertQueryButtonElement from '../components/revertQueryButtonElement'
 import updateQueryContainerElement from '../components/updateQueryContainerElement'
 import updateSchemaExtractionElement from '../components/updateSchemaExtractionElement'
-import databaseErrorButtonElement from '../components/databaseErrorButtonElement'
+import databaseErrorExplainButtonElement from '../components/databaseErrorExplainButtonElement'
+import databaseErrorFixButtonElement from '../components/databaseErrorFixButtonElement'
 import databaseErrorPopupElement from '../components/databaseErrorPopupElement'
+import feedbackMessageElement from '../components/feedbackMessageElement'
 
 import pasteTextIntoElement from '../utils/pasteTextIntoElement'
 import deleteTextInputElement from '../utils/deleteTextInputElement'
 import getComponentIdFromVariable from '../utils/getComponentIdFromVariable'
-import buildErrorMessageDisplay from '../utils/buildErrorMessageDisplay'
 
-import chatgptStreamRequest from '../services/chatgptStreamRequest'
-import { createPromptQueryMessages, createDatabaseErrorMessages } from '../services/chatgptInputMessages'
-import extractDatabaseSchema from '../services/extractDatabaseSchema'
-import getMetabaseVersion from '../services/getMetabaseVersion'
+import backendStreamingRequest from '../functions/backendStreamingRequest'
+import chatgptStreamingRequest from '../functions/chatgptStreamingRequest'
+import {
+  createPromptQueryMessages,
+  createDatabaseErrorExplainPromptMessages,
+  createDatabaseErrorFixPromptMessages
+} from '../functions/chatgptInputMessages'
+import getRawDatabaseSchema from '../functions/getRawDatabaseSchema'
+import getFormattedDatabaseSchema from '../functions/getFormattedDatabaseSchema'
+import getMetabaseVersion from '../functions/getMetabaseVersion'
 
 import getEditorOpenedElement from '../page_elements/getEditorOpenedElement'
 import getErrorWarningElement from '../page_elements/getErrorWarningElement'
@@ -22,37 +29,25 @@ import getQueryEditorTextarea from '../page_elements/getQueryEditorTextarea'
 import getVisualizationRootElement from '../page_elements/getVisualizationRootElement'
 import getEditorTopBar from '../page_elements/getEditorTopBar'
 
+import { ConfigDict } from '../types/chromeStorage'
+import { UserData } from '../types/backendApi'
 
-////////////// types //////////////
+import functions from '../firebase/functions'
 
+import { storageKeyOptionsTab } from '../constants/chromeStorage'
 
-interface databasesSchema {
-  [key: number]: {
-    engine: string;
-    tables: string;
-  };
-};
+import openOptionsPage from '../chromeMessaging/openOptionsPage'
+import getFirebaseAuthUser from '../chromeMessaging/getFirebaseAuthUser';
+import getFirebaseAuthToken from '../chromeMessaging/getFirebaseAuthToken'
 
-interface config {
-  schema: databasesSchema | undefined,
-  schemaExtractedAt: string | undefined,
-  key: string | undefined,
-  status: 'error' | 'invalid' | 'valid' | undefined,
-  modelName: string | undefined,
-};
+import { storageKeyLocalConfig } from '../constants/chromeStorage'
 
 
 ////////////// global variables //////////////
 
 
-// values stored in chrome
-var configDict: config = {
-  schema: undefined,
-  schemaExtractedAt: undefined,
-  key: undefined,
-  status: undefined,
-  modelName: undefined,
-}
+let configDict: ConfigDict = {};
+let user: UserData | null = null;
 
 // store
 let storeQueryContent: string | undefined = undefined;
@@ -60,11 +55,10 @@ let storeQueryError: string | undefined = undefined;
 let storeDatabaseSelected: number | undefined = undefined;
 
 // others
+let isContentScriptLoaded: boolean = false;
 let version: [number, number] = [50, 13]
 let previousQueryContents: string[] = [];
-let isQueryEditRunning: boolean = false;
-let isDatabaseErrorRunning: boolean = false;
-let isDatabasesSchemaExtractionRunning: boolean = false;
+let isOperationRunning: boolean = false;
 
 
 ////////////// metabase redux store state's variables and listener //////////////
@@ -95,40 +89,15 @@ function setStoreListener(): void {
 }
 
 
-////////////// databases schema things //////////////
-
-
-function onClickUpdateDatabasesSchema(): void {
-  // Launch the gif animation and call updateEmbeddings
-  if (isDatabasesSchemaExtractionRunning) {
-    return;
-  }
-  isDatabasesSchemaExtractionRunning = true;
-  updateSchemaExtractionElement.setAttribute("animate", "true");
-  updateDatabasesSchema().then(response => {
-    updateSchemaExtractionElement.setAttribute("animate", "false");
-    updateSchemaExtractionElement.setAttribute("schema_extracted_at", configDict.schemaExtractedAt);
-    isDatabasesSchemaExtractionRunning = false;
-  });
-}
-
-async function updateDatabasesSchema(): Promise<void> {
-  console.log("Retrieving the database structure through the Metabase API, this can take a while");
-  const schema: databasesSchema = await extractDatabaseSchema();
-  configDict.schema = schema;
-  configDict.schemaExtractedAt = new Date().toLocaleDateString("ja-JP");
-  chrome.storage.local.set({ 'metabase_chatgpt': configDict });
-}
-
-
 ////////////// insert elements + add listeners to buttons //////////////
 
 
 function setupElements() {
 
   function onElementAddedOrRemoved() {
-    setupQueryEditingElements()
-    setupErrorExplanationElements()
+    setupQueryEditingElements();
+    setupErrorExplainElements();
+    setupErrorFixElements();
   }
 
   function setupQueryEditingElements() {
@@ -148,32 +117,57 @@ function setupElements() {
       const editorTopBar = getEditorTopBar(version)
       updateQueryContainerElement.appendChild(revertQueryButtonElement);
       updateQueryContainerElement.appendChild(promptQueryButtonElement);
-      updateQueryContainerElement.appendChild(updateSchemaExtractionElement);
+      if (!user || !user.role || user.role === "admin" || user.role === "developer") {
+        updateQueryContainerElement.appendChild(updateSchemaExtractionElement);
+        updateSchemaExtractionElement.setAttribute("schema_extracted_at", configDict?.schemaExtractedAt);
+      }
       editorTopBar.insertBefore(updateQueryContainerElement, editorTopBar.firstChild);
-      updateSchemaExtractionElement.setAttribute("schema_extracted_at", configDict?.schemaExtractedAt);
     }
   }
 
-  function setupErrorExplanationElements() {
+  function setupErrorExplainElements() {
     const errorWarningElement = getErrorWarningElement(version);
-    var existingDatabaseErrorButtonElement = document.getElementById(getComponentIdFromVariable({databaseErrorButtonElement}));
-    if (!errorWarningElement && !existingDatabaseErrorButtonElement) {
+    var existingDatabaseErrorExplainButtonElement = document.getElementById(getComponentIdFromVariable({databaseErrorExplainButtonElement}));
+    if (!errorWarningElement && !existingDatabaseErrorExplainButtonElement) {
       return
     }
-    if (errorWarningElement && existingDatabaseErrorButtonElement) {
+    if (errorWarningElement && existingDatabaseErrorExplainButtonElement) {
       return
     }
-    if (!errorWarningElement && existingDatabaseErrorButtonElement) {
-      existingDatabaseErrorButtonElement.remove();
+    if (!errorWarningElement && existingDatabaseErrorExplainButtonElement) {
+      existingDatabaseErrorExplainButtonElement.remove();
       const existingdatabaseErrorPopupElement = document.getElementById(getComponentIdFromVariable({databaseErrorPopupElement}));
       if (existingdatabaseErrorPopupElement) {
         existingdatabaseErrorPopupElement.remove()
       }
       return
     }
-    if (errorWarningElement && !existingDatabaseErrorButtonElement) {
+    if (errorWarningElement && !existingDatabaseErrorExplainButtonElement) {
       const visualizationRootElement = getVisualizationRootElement(version);
-      visualizationRootElement.appendChild(databaseErrorButtonElement);
+      visualizationRootElement.appendChild(databaseErrorExplainButtonElement);
+    }
+  }
+
+  function setupErrorFixElements() {
+    const errorWarningElement = getErrorWarningElement(version);
+    var existingDatabaseErrorFixButtonElement = document.getElementById(getComponentIdFromVariable({databaseErrorFixButtonElement}));
+    if (!errorWarningElement && !existingDatabaseErrorFixButtonElement) {
+      return
+    }
+    if (errorWarningElement && existingDatabaseErrorFixButtonElement) {
+      return
+    }
+    if (!errorWarningElement && existingDatabaseErrorFixButtonElement) {
+      existingDatabaseErrorFixButtonElement.remove();
+      const existingdatabaseErrorPopupElement = document.getElementById(getComponentIdFromVariable({databaseErrorPopupElement}));
+      if (existingdatabaseErrorPopupElement) {
+        existingdatabaseErrorPopupElement.remove()
+      }
+      return
+    }
+    if (errorWarningElement && !existingDatabaseErrorFixButtonElement) {
+      const visualizationRootElement = getVisualizationRootElement(version);
+      visualizationRootElement.appendChild(databaseErrorFixButtonElement);
     }
   }
 
@@ -182,14 +176,41 @@ function setupElements() {
     mainPromptQuery()
   });
   updateSchemaExtractionElement.addEventListener('click', function(event) {
+    event.stopPropagation();
     onClickUpdateDatabasesSchema()
   })
   revertQueryButtonElement.addEventListener('click', function(event) {
     mainRevertQuery()
   });
-  databaseErrorButtonElement.addEventListener('click', function(event) {
-    mainDatabaseError()
+  databaseErrorExplainButtonElement.addEventListener('click', function(event) {
+    event.stopPropagation();
+    mainDatabaseErrorExplain();
   });
+  databaseErrorFixButtonElement.addEventListener('click', function(event) {
+    event.stopPropagation();
+    mainDatabaseErrorFix();
+  });
+  document.addEventListener('click', (event: MouseEvent) => {
+    const existingFeedbackMessageElement = document.getElementById(getComponentIdFromVariable({feedbackMessageElement}));
+    if (existingFeedbackMessageElement && !existingFeedbackMessageElement.contains(event.target as Node)) {
+      existingFeedbackMessageElement.remove();
+    }
+  });
+  document.addEventListener('keydown', handleShortcut);
+
+  // Shortcut listener
+  function handleShortcut(event: KeyboardEvent) {
+    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'p') {
+      event.preventDefault();
+      mainPromptQuery();
+    } else if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'e') {
+      event.preventDefault();
+      mainDatabaseErrorExplain();
+    } else if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'f') {
+      event.preventDefault();
+      mainDatabaseErrorFix();
+    }
+  }
 
   // Setup the DOM change observer
   const observer = new MutationObserver(onElementAddedOrRemoved);
@@ -207,7 +228,7 @@ function setupElements() {
 
 function mainPromptQuery() {
 
-  if (isQueryEditRunning || isDatabasesSchemaExtractionRunning) {
+  if (isOperationRunning) {
     return
   }
   
@@ -217,15 +238,32 @@ function mainPromptQuery() {
   promptQueryButtonElement.appendChild(promptQueryPopupElement);
   promptQueryPopupElement.focus();
   promptQueryPopupElement.addEventListener('keypress', onPressEnterInsideElement);
+
+  // Handle enter key inside the popup
   function onPressEnterInsideElement(event: KeyboardEvent) : void {
-    if (event.key === 'Enter' && !event.shiftKey && !isQueryEditRunning) {
-      isQueryEditRunning = true;
+    if (event.key === 'Enter' && !event.shiftKey && !isOperationRunning) {
       event.preventDefault();
-      previousQueryContents.push(storeQueryContent);
-      document.getElementById(getComponentIdFromVariable({revertQueryButtonElement})).style.display = "block";
-      deleteTextInputElement(queryEditorTextarea, storeQueryContent);
-      const promptMessages = createPromptQueryMessages(storeQueryContent, promptQueryPopupElement.value, configDict.schema[storeDatabaseSelected]);
-      chatgptStreamRequest(configDict, promptMessages, onApiResponseData, onApiRequestError);
+      isOperationRunning = true;
+      pushPreviousQueryContent();
+      if (user) {
+        const payload = {
+          userPrompt: promptQueryPopupElement.value,
+          existingQuery: storeQueryContent,
+          databaseId: storeDatabaseSelected,
+        }
+        backendStreamingRequest('api/writeQuery', payload, onApiResponseData, onApiRequestError);
+      } else if (configDict.status === 'valid') {
+        const promptMessages = createPromptQueryMessages(
+          storeQueryContent,
+          promptQueryPopupElement.value,
+          configDict.schema[storeDatabaseSelected]
+        );
+        chatgptStreamingRequest(configDict, promptMessages, onApiResponseData, onApiRequestError);
+      } else if (configDict.status === 'error' || configDict.status === 'invalid') {
+        onApiRequestError("Your API key is invalid. Please enter a valid API key in the extension popup or sign in.");
+      } else {
+        onApiRequestError("Sign in with the extension popup to use Metabase Copilot");
+      }
       cleanupPopup();
     }
   };
@@ -251,21 +289,33 @@ function mainPromptQuery() {
   }
 
   function onApiResponseData(content: string, isFinished: boolean) : void {
-    isQueryEditRunning = !isFinished
+    if (isFinished) {
+      isOperationRunning = false;
+    }
     pasteTextIntoElement(queryEditorTextarea, content)
   }
 
-  function onApiRequestError(errorReason: string, errorMessage: string) : void {
-    const variableMessage = buildErrorMessageDisplay(errorReason, errorMessage)
-    const errorMessageToInsert = `/*\n${variableMessage}\n*/`
-    onApiResponseData(errorMessageToInsert, true);
+  function onApiRequestError(errorMessage: string) : void {
+    const existingDatabaseErrorPopupElement = document.getElementById(getComponentIdFromVariable({databaseErrorPopupElement}))
+    if (existingDatabaseErrorPopupElement) {
+      existingDatabaseErrorPopupElement.remove()
+    }
+    if (!errorMessage) {
+      setFeedbackMessage("Unknown error, sorry.", "error")
+    } else {
+      setFeedbackMessage(errorMessage, "error")
+    }
+    isOperationRunning = false;
   }
 
 }
 
 
+////////////// Revert query function //////////////
+
+
 function mainRevertQuery() {
-  if (isQueryEditRunning || isDatabasesSchemaExtractionRunning || previousQueryContents.length === 0) {
+  if (isOperationRunning || previousQueryContents.length === 0) {
     return
   }
   const queryEditorTextarea = getQueryEditorTextarea(version);
@@ -277,28 +327,103 @@ function mainRevertQuery() {
 }
 
 
-////////////// Database error function //////////////
+function pushPreviousQueryContent() : void {
+  const queryEditorTextarea = getQueryEditorTextarea(version);
+  previousQueryContents.push(storeQueryContent);
+  document.getElementById(getComponentIdFromVariable({revertQueryButtonElement})).style.display = "block";
+  deleteTextInputElement(queryEditorTextarea, storeQueryContent);
+}
 
 
-function mainDatabaseError() : void {
+////////////// Database error fix function //////////////
 
-  function onApiRequestError(errorReason: string, errorMessage: string) : void {
-    const variableErrorMessage = buildErrorMessageDisplay(errorReason, errorMessage);
-    onApiResponseData(variableErrorMessage, true);
+
+function mainDatabaseErrorFix() : void {
+
+  function onApiRequestError(errorMessage: string) : void {
+    const existingdatabaseErrorPopupElement = document.getElementById(getComponentIdFromVariable({databaseErrorPopupElement}))
+    if (existingdatabaseErrorPopupElement) {
+      existingdatabaseErrorPopupElement.remove();
+    }
+    if (!errorMessage) {
+      setFeedbackMessage("Unknown error, sorry.", "error")
+    } else {
+      setFeedbackMessage(errorMessage, "error")
+    }
+    isOperationRunning = false;
+  }
+  
+  function onApiResponseData(content: string, isFinished: boolean) : void {
+    pasteTextIntoElement(queryEditorTextarea, content)
+    if (isFinished) {
+      isOperationRunning = false;
+    }
+  }
+
+  if (isOperationRunning) {
+    return;
+  }
+  isOperationRunning = true;
+  const queryEditorTextarea = getQueryEditorTextarea(version);
+
+  if (document.getElementById(getComponentIdFromVariable({databaseErrorPopupElement}))) {
+    databaseErrorPopupElement.remove();
+  }
+
+  if (user) {
+    pushPreviousQueryContent();
+    const payload = {
+      existingQuery: storeQueryContent,
+      databaseError: storeQueryError,
+      databaseId: storeDatabaseSelected,
+    }
+    backendStreamingRequest("api/fixDatabaseError", payload, onApiResponseData, onApiRequestError);
+  } else if (configDict.status === 'valid') {
+    pushPreviousQueryContent();
+    const promptMessages = createDatabaseErrorFixPromptMessages(
+      storeQueryContent,
+      storeQueryError,
+      configDict.schema[storeDatabaseSelected]
+    );
+    chatgptStreamingRequest(configDict, promptMessages, onApiResponseData, onApiRequestError);
+  } else if (configDict.status === 'error' || configDict.status === 'invalid') {
+    onApiRequestError("Your API key is invalid. Please enter a valid API key in the extension popup or sign in.");
+  } else {
+    onApiRequestError("Sign in with the extension popup to use Metabase Copilot");
+  }
+}
+
+
+////////////// Database error explain function //////////////
+
+
+function mainDatabaseErrorExplain() : void {
+
+  function onApiRequestError(errorMessage: string) : void {
+    const existingdatabaseErrorPopupElement = document.getElementById(getComponentIdFromVariable({databaseErrorPopupElement}))
+    if (existingdatabaseErrorPopupElement) {
+      existingdatabaseErrorPopupElement.remove();
+    }
+    if (!errorMessage) {
+      setFeedbackMessage("Unknown error, sorry.", "error")
+    } else {
+      setFeedbackMessage(errorMessage, "error")
+    }
+    isOperationRunning = false;
   }
   
   function onApiResponseData(content: string, isFinished: boolean) : void {
     const previousContent = databaseErrorPopupElement.getAttribute("error-message");
     databaseErrorPopupElement.setAttribute("error-message", previousContent+content);
     if (isFinished) {
-      isDatabaseErrorRunning = false;
+      isOperationRunning = false;
     }
   }
 
-  if (isDatabaseErrorRunning) {
+  if (isOperationRunning) {
     return;
   }
-  isDatabaseErrorRunning = true;
+  isOperationRunning = true;
 
   databaseErrorPopupElement.setAttribute("error-message", "");
   if (!document.getElementById(getComponentIdFromVariable({databaseErrorPopupElement}))) {
@@ -306,12 +431,99 @@ function mainDatabaseError() : void {
     visualizationRootElement.appendChild(databaseErrorPopupElement);
   }
 
-  const promptMessages = createDatabaseErrorMessages(
-    storeQueryContent,
-    storeQueryError,
-    configDict.schema[storeDatabaseSelected]
-  );
-  chatgptStreamRequest(configDict, promptMessages, onApiResponseData, onApiRequestError);
+  if (user) {
+    const payload = {
+      existingQuery: storeQueryContent,
+      databaseError: storeQueryError,
+      databaseId: storeDatabaseSelected,
+    }
+    backendStreamingRequest("api/explainDatabaseError", payload, onApiResponseData, onApiRequestError);
+  } else if (configDict.status === 'valid') {
+    const promptMessages = createDatabaseErrorExplainPromptMessages(
+      storeQueryContent,
+      storeQueryError,
+      configDict.schema[storeDatabaseSelected]
+    );
+    chatgptStreamingRequest(configDict, promptMessages, onApiResponseData, onApiRequestError);
+  } else if (configDict.status === 'error' || configDict.status === 'invalid') {
+    onApiRequestError("Your API key is invalid. Please enter a valid API key in the extension popup or sign in.");
+  } else {
+    onApiRequestError("Sign in with the extension popup to use Metabase Copilot");
+  }
+}
+
+
+////////////// databases schema things //////////////
+
+
+function onClickUpdateDatabasesSchema(): void {
+  if (isOperationRunning) {
+    return;
+  }
+  if (!user && configDict.status !== 'valid') {
+    setFeedbackMessage("Your API key is invalid. Please enter a valid API key in the extension popup or sign in", "error");
+    return;
+  }
+  isOperationRunning = true;
+  updateSchemaExtractionElement.setAttribute("animate", "true");
+  setFeedbackMessage("Extracting the database schema structure, please do not close this page.", "success");
+  updateDatabasesSchema().then(response => {
+    updateSchemaExtractionElement.setAttribute("animate", "false");
+    feedbackMessageElement.remove();
+    if (configDict.schemaExtractedAt) {
+      updateSchemaExtractionElement.setAttribute("schema_extracted_at", configDict.schemaExtractedAt);
+    }
+    if (user) {
+      chrome.storage.local.set({ [storageKeyOptionsTab]: "databaseSchema" }, () => {
+        openOptionsPage();
+      });
+    }
+    isOperationRunning = false;
+  }).catch(error => {
+    setFeedbackMessage(error.message, "error");
+    updateSchemaExtractionElement.setAttribute("animate", "false");
+    isOperationRunning = false;
+  });
+}
+
+
+async function updateDatabasesSchema(): Promise<void> {
+  const rawDatabaseSchema = await getRawDatabaseSchema();
+  if (user) {
+    const token = await getFirebaseAuthToken();
+    try {
+      await functions.callFunction('api/updateRawDatabaseSchema', token, "POST", rawDatabaseSchema);
+    } catch (error) {
+      console.error("Error updating raw database schema", error.message);
+      throw new Error(error.message);
+    }
+  } else {
+    const schema = await getFormattedDatabaseSchema(rawDatabaseSchema);
+    configDict.schema = schema;
+    configDict.schemaExtractedAt = new Date().toLocaleDateString("ja-JP");
+    chrome.storage.local.set({ [storageKeyLocalConfig]: configDict });
+  }
+}
+
+
+////////////// error message //////////////
+
+
+function setFeedbackMessage(message: string, type: string) {
+  try {
+    if (!message || message === "") {
+      return;
+    }
+    feedbackMessageElement.setAttribute("message", message);
+    feedbackMessageElement.setAttribute("type", type);
+    const existingFeedbackMessageElement = document.getElementById(getComponentIdFromVariable({feedbackMessageElement}));
+    if (!existingFeedbackMessageElement) {
+      const visualizationRootElement = getVisualizationRootElement(version);
+      visualizationRootElement.appendChild(feedbackMessageElement);
+    }
+  } catch (error) {
+    console.error("Error setting feedback message", error, message, type);
+  }
 }
 
 
@@ -319,20 +531,44 @@ function mainDatabaseError() : void {
 
 
 function main() {
+
+  if (isContentScriptLoaded) {
+    return;
+  }
+  isContentScriptLoaded = true;
+
   getMetabaseVersion().then(response => {
     version = response;
   })
-  chrome.storage.local.get('metabase_chatgpt', function(result) {
-    if (result.metabase_chatgpt) {
-      configDict = result.metabase_chatgpt;
-    }
-    setStoreListener();
-    setupElements();
-    console.log('result.metabase_chatgpt', result.metabase_chatgpt)
-    if (!result.metabase_chatgpt?.schema){
-      onClickUpdateDatabasesSchema();
+
+  getFirebaseAuthUser().then(authUser => {
+    if (authUser) {
+      getFirebaseAuthToken().then(token => {
+        functions.callFunction('api/getUser', token, "GET").then(response => {
+          user = response;
+          setStoreListener();
+          setupElements();
+          if (!user?.formattedDatabaseSchema) {
+            onClickUpdateDatabasesSchema();
+          }
+        }).catch(error => {
+          console.error("Error getting user", error);
+          setFeedbackMessage("Could not retrieve your user profile, sorry. Please refresh the page", "error");
+        });
+      });
+    } else {
+      setStoreListener();
+      setupElements();
+      chrome.storage.local.get([storageKeyLocalConfig], function(result) {
+        if (result[storageKeyLocalConfig]) {
+          configDict = result[storageKeyLocalConfig];
+          if (!configDict.schema) {
+            onClickUpdateDatabasesSchema();
+          }
+        }
+      });
     }
   });
 }
 
-main()
+main();

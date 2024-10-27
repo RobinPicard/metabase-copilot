@@ -1,0 +1,22 @@
+:root {
+  --dark-blue: #509ee3;
+  --dark-blue-hover: rgba(80, 158, 227, 0.88);
+  --light-blue: #e6f2ff;
+  --background-blue: rgb(249, 251, 252);
+  --light-grey: rgb(238, 236, 236);
+  --neutral-grey: rgb(231, 229, 229);
+  --dark-grey: rgb(105, 110, 123);
+  --black: rgb(76, 87, 115);
+  --dark-red: #931e2a;
+  --dark-red-hover: #b32e3a;
+  --light-red: #ffebed;
+
+  --main-font: 'Lato', sans-serif;
+  --mono-font: 'Monaco', monospace;
+}
+
+body {
+  font-family: var(--main-font);
+  background-color: var(--background-blue);
+  color: var(--black);
+}

@@ -8,7 +8,7 @@ function buildErrorMessageDisplay(errorReason: string, errorMessage?: string): s
   } else if (errorReason === "invalid_api_key" && errorMessage) {
     displayMessage = `Openai indicated that your API key is no longer valid, please modify it in the extension's popup\nThe error message they provided: ${errorMessage}`;
   } else {
-    displayMessage = "Unknown error, sorry";
+    displayMessage = JSON.stringify(errorMessage);
   }
 
   return displayMessage;

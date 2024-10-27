@@ -12,7 +12,14 @@ interface ReduxState {
   };
 };
 
-const reduxStore = (document.querySelector('#root') as any)?._reactRootContainer?._internalRoot?.current?.memoizedState?.element?.props?.store;
+interface Window {
+  Metabase: {
+    store: any;
+  }
+}
+
+
+let reduxStore = window.Metabase.store;
 
 if (reduxStore) {
   let latestQueryContent: string | undefined = undefined;

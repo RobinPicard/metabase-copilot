@@ -1,4 +1,4 @@
-function getEditorOpenedElement(version : [number, number]) : Element {
+function getEditorOpenedElement(version : [number, number]) : Element | null {
   const elements = document.querySelectorAll('svg.Icon.Icon-contract');
   if (elements) {
     return elements[0]

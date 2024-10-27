@@ -1,4 +1,4 @@
-function getVisualizationRootElement(version : [number, number]) : Element {
+function getVisualizationRootElement(version : [number, number]) : Element | null {
   // tested with 0.45.1 + 0.46.1 + 0.48.2 + 0.49.1 + 0.49.13
   if (version[0] < 50) {
     return document.querySelector('div.spread.Visualization');

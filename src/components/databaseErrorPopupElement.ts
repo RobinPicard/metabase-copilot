@@ -3,10 +3,10 @@ import './databaseErrorPopupElement.css';
 import dismissIcon from '../../assets/dismissIcon.png'
 import getComponentIdFromVariable from "../utils/getComponentIdFromVariable";
 
-
 const databaseErrorPopupElement = document.createElement('div');
 databaseErrorPopupElement.id = getComponentIdFromVariable({databaseErrorPopupElement})
 databaseErrorPopupElement.setAttribute("error-message", "")
+databaseErrorPopupElement.style.display = 'none';
 
 const dismissElement = document.createElement('img');
 dismissElement.src = chrome.runtime.getURL(dismissIcon);
@@ -25,7 +25,11 @@ databaseErrorPopupElement.appendChild(textElement)
 const observer = new MutationObserver((mutations) => {
   mutations.forEach((mutation) => {
     if (mutation.type === 'attributes' && mutation.attributeName === 'error-message') {
-      textElement.innerHTML = databaseErrorPopupElement.getAttribute("error-message")
+      const errorMessage = databaseErrorPopupElement.getAttribute("error-message") || "";
+      textElement.innerHTML = errorMessage;
+      
+      // Show or hide the element based on the error message content
+      databaseErrorPopupElement.style.display = errorMessage ? 'flex' : 'none';
     }
   });
 });

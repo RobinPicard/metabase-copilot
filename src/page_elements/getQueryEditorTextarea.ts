@@ -1,4 +1,4 @@
-function getQueryEditorTextarea(version : [number, number]) : Element {
+function getQueryEditorTextarea(version : [number, number]) : Element | null {
   return document.querySelector('textarea.ace_text-input');
 }
 
