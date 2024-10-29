@@ -15,11 +15,19 @@ Metabase Copilot has 3 main features:
 
 Download the extension in the Chrome webstore: https://chrome.google.com/webstore/detail/metabase-chatgpt/kkkpnhdoamjghmnjpailmpndjlegkmnh
 
-Click on the extension's icon on top of your browser's window (on the right of the url bar). Then it will open the extension's popup in which you'll be presented with the settings. There, you must provide your api key. Upon submitting it, a test request will be made to Openai to check its validity. 
+Click on the extension's icon on top of your browser's window (on the right of the url bar). Then it will open the extension's popup in which you'll be presented with the settings. There, you can choose between 2 ways of using the extension:
+- logged-in mode
+- local mode
 
-Then, go to the Metabase native query editor and wait for the database schema extraction to finish running (the circular arrows gif)
+After you've either logged in or provided your OpenAI API key, the database schema extraction will be automatically run when you first open the native query editor of Metabase. Once this is done, you'll be able to use the extension.
 
-Finally, you can go back to the extension's popup, see the cost estimation for the 2 models proposed; gpt-4o and gpt-4o-mini and choose which one you want to use.
+### Logged-in mode
+
+In this mode, you have to log in with Google in the extension's popup. A part of the operations of the extension will be run in a server (not open source). This mode includes both a free tier and a paid tier. The free tier has a daily rate limit. The paid tier is made for companies that want to provide the extension to several users. It has no rate limit and includes the ability to define a single set of database schema options.
+
+### Local mode
+
+In this mode, the extension is run locally (everything related to it is in this repository). You must provide an OpenAI API key in the extension's popup. Upon submitting it, a test request will be made to OpenAI to check its validity. You will also have to choose the model you want to use (gpt-4o or gpt-4o-mini).
 
 ## Development
 
@@ -34,10 +42,11 @@ The organization of the files is the following:
 - `background.ts` runs continuously and is in charge of injecting content.js when a page whose url follows the pattern of a Metabase question page
 - `content.ts` is the main file that interacts with Metabase's pages
 - `popup.html` is the settings popup of the extension in which the user can enter their api key
+- `options.html` is the options page of the extension (only applies for the logged-in mode)
 
 ## Contribution
 
-Contributions are very much welcomed! To contribute:
+Contributions are very much welcome! To contribute:
 1. Fork the repository
 2. Create a new branch with a descriptive name
 3. Make your changes and commit them with a meaningful commit message
