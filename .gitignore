@@ -2,6 +2,7 @@ dist/
 bundle/
 node_modules/
 *.zip
+bundle.zip
 
 # Cache and temporary files
 .cache/

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 
-import getFirebaseAuthToken from '../../chromeMessaging/getFirebaseAuthToken';
-import firebaseSignOut from '../../chromeMessaging/firebaseSignOut';
+import getFirebaseAuthToken from '../../chromeMessaging/getAuthToken';
+import firebaseSignOut from '../../chromeMessaging/authSignOut';
 import functions from '../../firebase/functions'
 import { UserData, CompanyUser, CompanyInvitation } from '../../types/backendApi';
 

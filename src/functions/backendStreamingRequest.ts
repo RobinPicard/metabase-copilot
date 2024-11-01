@@ -1,4 +1,4 @@
-import getFirebaseAuthToken from '../chromeMessaging/getFirebaseAuthToken';
+import getFirebaseAuthToken from '../chromeMessaging/getAuthToken';
 import functions from '../firebase/functions'
 
 

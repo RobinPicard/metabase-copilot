@@ -1,5 +1,4 @@
-export const firebaseSignInActionName = 'FIREBASE_SIGN_IN';
-export const firebaseSignOutActionName = 'FIREBASE_SIGN_OUT';
-export const openOptionsPageActionName = 'OPEN_OPTIONS_PAGE';
-export const getFirebaseAuthUserActionName = 'GET_FIREBASE_AUTH_USER';
-export const getFirebaseTokenActionName = 'GET_FIREBASE_TOKEN';
+export const getAuthTokenActionName = 'METABASE_COPILOT_GET_AUTH_TOKEN';
+export const signInActionName = 'METABASE_COPILOT_SIGN_IN';
+export const signOutActionName = 'METABASE_COPILOT_SIGN_OUT';
+export const openOptionsPageActionName = 'METABASE_COPILOT_OPEN_OPTIONS_PAGE';

@@ -1,12 +1,8 @@
 import { openOptionsPageActionName } from "../constants/chromeMessaging";
 
 
-const openOptionsPage = (): Promise<string | null> => {
-  return new Promise((resolve) => {
-    chrome.runtime.sendMessage({action: openOptionsPageActionName}, (response) => {
-      resolve(response);
-    });
-  });
+const openOptionsPage = async () => {
+  await chrome.runtime.sendMessage({action: openOptionsPageActionName})
 };
 
 

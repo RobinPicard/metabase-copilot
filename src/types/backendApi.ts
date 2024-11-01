@@ -1,6 +1,3 @@
-import type { firestore } from "firebase-admin";
-
-
 interface CompanyData {
   name: string;
   subscriptionStatus: string;

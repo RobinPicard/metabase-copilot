@@ -37,8 +37,7 @@ import functions from '../firebase/functions'
 import { storageKeyOptionsTab } from '../constants/chromeStorage'
 
 import openOptionsPage from '../chromeMessaging/openOptionsPage'
-import getFirebaseAuthUser from '../chromeMessaging/getFirebaseAuthUser';
-import getFirebaseAuthToken from '../chromeMessaging/getFirebaseAuthToken'
+import getAuthToken from '../chromeMessaging/getAuthToken'
 
 import { storageKeyLocalConfig } from '../constants/chromeStorage'
 
@@ -490,7 +489,7 @@ function onClickUpdateDatabasesSchema(): void {
 async function updateDatabasesSchema(): Promise<void> {
   const rawDatabaseSchema = await getRawDatabaseSchema();
   if (user) {
-    const token = await getFirebaseAuthToken();
+    const token = await getAuthToken();
     try {
       await functions.callFunction('api/updateRawDatabaseSchema', token, "POST", rawDatabaseSchema);
     } catch (error) {
@@ -541,20 +540,18 @@ function main() {
     version = response;
   })
 
-  getFirebaseAuthUser().then(authUser => {
-    if (authUser) {
-      getFirebaseAuthToken().then(token => {
-        functions.callFunction('api/getUser', token, "GET").then(response => {
-          user = response;
-          setStoreListener();
-          setupElements();
-          if (!user?.formattedDatabaseSchema) {
-            onClickUpdateDatabasesSchema();
-          }
-        }).catch(error => {
-          console.error("Error getting user", error);
-          setFeedbackMessage("Could not retrieve your user profile, sorry. Please refresh the page", "error");
-        });
+  getAuthToken().then(authToken => {
+    if (authToken) {
+      functions.callFunction('api/getUser', authToken, "GET").then(response => {
+        user = response;
+        setStoreListener();
+        setupElements();
+        if (!user?.formattedDatabaseSchema) {
+          onClickUpdateDatabasesSchema();
+        }
+      }).catch(error => {
+        console.error("Error getting user", error);
+        setFeedbackMessage("Could not retrieve your user profile, sorry. Please refresh the page", "error");
       });
     } else {
       setStoreListener();

@@ -10,18 +10,15 @@ import {
 import functions from '../firebase/functions';
 import ApiKeyTab from './tabs/ApiKeyTab';
 import SignInTab from './tabs/SignInTab';
-import LoadingAnimation from './tabs/LoadingAnimation';
 import { ConfigDict } from '../types/chromeStorage'
 import { UserData } from '../types/backendApi'
-import { AuthUser } from '../types/firebase'
-import getFirebaseAuthToken from '../chromeMessaging/getFirebaseAuthToken';
-import getFirebaseAuthUser from '../chromeMessaging/getFirebaseAuthUser';
-import firebaseSignIn from '../chromeMessaging/firebaseSignIn';
+import getAuthToken from '../chromeMessaging/getAuthToken';
+import firebaseSignIn from '../chromeMessaging/authSignIn';
+
 
 const Popup: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"signIn" | "apiKey" | null>(null);
-  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [user, setUser] = useState<UserData | null>(null);
   const [configDict, setConfigDict] = useState<ConfigDict | null>(null);
   const [subscriptionUrl, setSubscriptionUrl] = useState<string | undefined>(undefined);
@@ -32,13 +29,11 @@ const Popup: React.FC = () => {
   // Start by getting the user's auth state
   useEffect(() => {
     setIsLoading(true);
-    getFirebaseAuthUser()
-      .then((authUser) => {
-        if (authUser) {
-          setAuthUser(authUser);
-          getUser();
+    getAuthToken()
+      .then((token) => {
+        if (token) {
+          getUser(token);
         } else {
-          setAuthUser(null);
           setUser(null);
           getConfigDict();
         }
@@ -58,14 +53,14 @@ const Popup: React.FC = () => {
 
   // Set the active tab each time the authUser or configDict changes
   useEffect(() => {
-    if (authUser) {
+    if (user) {
       setActiveTab('signIn');
     } else if (configDict?.key || configDict?.modelName) {
       setActiveTab('apiKey');
     } else {
       setActiveTab('signIn');
     }
-  }, [authUser, user, configDict]);
+  }, [user, configDict]);
 
   // If there's a logged in user that does not have a company, get the subscription url
   useEffect(() => {
@@ -77,11 +72,11 @@ const Popup: React.FC = () => {
   ////////// functions //////////
 
   // Get the user's data from the backend
-  const getUser = async (idToken: string=null) => {
+  const getUser = async (authToken: string=null) => {
     try {
-      let token = idToken;
-      if (!idToken) {
-        const tokenResponse = await getFirebaseAuthToken();
+      let token = authToken;
+      if (!authToken) {
+        const tokenResponse = await getAuthToken();
         token = tokenResponse;
       }
       const result = await functions.callFunction('api/getUser', token, "GET");
@@ -101,13 +96,13 @@ const Popup: React.FC = () => {
       if (result[storageKeyLocalConfigOld]) {
         chrome.storage.local.remove(storageKeyLocalConfigOld);
       }
+      setIsLoading(false);
     });
-    setIsLoading(false);
   }
 
   // Get the user's subscription url from the backend
   const getSubscriptionUrl = async () => {
-    const token = await getFirebaseAuthToken();
+    const token = await getAuthToken();
     const result = await functions.callFunction('api/getStripePaymentLink', token, "GET");
     setSubscriptionUrl(result.url);
   }
@@ -118,9 +113,8 @@ const Popup: React.FC = () => {
   const signIn = async () => {
     setIsLoading(true);
     try {
-      const authUser = await firebaseSignIn();
-      setAuthUser(authUser);
-      getUser();
+      const authToken = await firebaseSignIn();
+      getUser(authToken);
     } catch (error) {
       setIsLoading(false);
       console.error('Error signing in:', error);
@@ -158,7 +152,6 @@ const Popup: React.FC = () => {
           user={user}
           signIn={signIn}
           upgrade={upgrade}
-          subscriptionUrl={subscriptionUrl}
           setActiveTab={setActiveTab}
           errorMessage={errorMessage}
           setErrorMessage={setErrorMessage}
@@ -173,7 +166,7 @@ const Popup: React.FC = () => {
         <HeaderTitle>Metabase Copilot</HeaderTitle>
       </Header>
       <TabContentContainer>
-        {isLoading ? <LoadingAnimation /> : renderTabContent()}
+        {isLoading ? <div></div> : renderTabContent()}
       </TabContentContainer>
     </Root>
   );
