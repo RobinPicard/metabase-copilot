@@ -1,12 +1,9 @@
-import auth from './firebase/auth';
 import {
-  getFirebaseAuthUserActionName,
-  getFirebaseTokenActionName,
-  firebaseSignInActionName,
-  firebaseSignOutActionName,
+  getAuthTokenActionName,
+  signInActionName,
+  signOutActionName,
   openOptionsPageActionName
 } from './constants/chromeMessaging';
-import { signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
 
 
 type RemoveInfo = {};
@@ -54,94 +51,55 @@ chrome.webNavigation.onBeforeNavigate.addListener((details: Details) => {
 });
 
 
-//////////////////// firebase authentication ////////////////////
+//////////////////// authentication ////////////////////
 
-// Add this function to wait for auth to initialize
-function waitForAuth(timeout = 5000): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      unsubscribe();
-      resolve();
-    });
-
-    setTimeout(() => {
-      unsubscribe();
-      reject(new Error('Auth initialization timeout'));
-    }, timeout);
-  });
-}
 
 // Modify the message listener
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  // Helper function to handle auth-related actions
-  const handleAuthAction = async (action: () => Promise<any>) => {
-    try {
-      await waitForAuth();
-      const result = await action();
-      sendResponse(result);
-    } catch (error) {
-      console.error('Auth error:', error);
-      sendResponse({ error: "Authentication error" });
-    }
-  };
 
-  if (message.action === getFirebaseAuthUserActionName) {
-    handleAuthAction(async () => {
-      const user = auth.currentUser;
-      return user ? { user: user.toJSON() } : { error: "User not authenticated hereeeee" };
+  if (message.action === getAuthTokenActionName) {
+    chrome.identity.getAuthToken({ interactive: false }, async (token) => {
+      if (token) {
+        sendResponse({token: token});
+      } else {
+        sendResponse({});
+      }
     });
     return true;
   }
-  else if (message.action === getFirebaseTokenActionName) {
-    handleAuthAction(async () => {
-      const user = auth.currentUser;
-      if (user) {
-        const idToken = await user.getIdToken(false);
-        return { token: idToken };
+  else if (message.action === signInActionName) {
+    chrome.identity.getAuthToken({ interactive: true }, async (token) => {
+      if (token) {
+        sendResponse({token: token});
+      } else {
+        sendResponse({});
       }
-      return { error: "User not authenticated" };
     });
     return true;
   }
-  else if (message.action === firebaseSignInActionName) {
-    handleAuthAction(async () => {
-      const user = auth.currentUser;
-      if (user) {
-        return { user: user.toJSON() };
+  else if (message.action === signOutActionName) {
+    chrome.identity.getAuthToken({ interactive: false }, (token) => {
+      console.log("signOutActionName, token", token);
+      if (chrome.runtime.lastError || !token) {
+        sendResponse({});
+        return;
       }
-      return new Promise((resolve) => {
-        chrome.identity.getAuthToken({ interactive: true }, async (token) => {
-          if (chrome.runtime.lastError || !token) {
-            console.error(chrome.runtime.lastError);
-            resolve({ error: "Error getting token" });
-            return;
-          }
-          const credential = GoogleAuthProvider.credential(null, token);
-          try {
-            const userCredential = await signInWithCredential(auth, credential);
-            if (userCredential.user) {
-              resolve({ user: userCredential.user.toJSON() });
-            } else {
-              resolve({ error: "Error authenticating user" });
-            }
-          } catch (error) {
-            console.error('Sign in error:', error);
-            resolve({ error: "Error during sign in" });
-          }
+      const revokeUrl = `https://accounts.google.com/o/oauth2/revoke?token=${token}`;
+      fetch(revokeUrl)
+        .then(() => {
+          chrome.identity.removeCachedAuthToken({ token }, () => {
+            console.log("signOutActionName, removed token");
+            sendResponse({});
+          });
+        })
+        .catch(error => {
+          console.error('Error revoking token:', error);
+          sendResponse({});
         });
-      });
     });
     return true;
   }
-  // sign out from firebase
-  else if (message.action === firebaseSignOutActionName) {
-    auth.signOut().then(() => {
-      sendResponse({success: true});
-    }).catch((error) => {
-      sendResponse({error: "Error signing out"});
-    });
-  } else if (message.action === openOptionsPageActionName) {
+  else if (message.action === openOptionsPageActionName) {
     chrome.runtime.openOptionsPage();
   } 
-  return true;
 });

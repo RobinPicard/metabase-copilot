@@ -16,7 +16,7 @@ import {
   CompanyInvitation,
 } from '../types/backendApi'
 import { storageKeyOptionsTab } from '../constants/chromeStorage';
-import getFirebaseAuthToken from '../chromeMessaging/getFirebaseAuthToken';
+import getFirebaseAuthToken from '../chromeMessaging/getAuthToken';
 import { Payment } from '../types/backendApi';
 
 

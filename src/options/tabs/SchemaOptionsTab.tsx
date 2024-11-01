@@ -9,7 +9,7 @@ import {
 } from '../../types/backendApi'
 import functions from '../../firebase/functions'
 import { Collapse, Checkbox } from 'antd';
-import getFirebaseAuthToken from '../../chromeMessaging/getFirebaseAuthToken';
+import getFirebaseAuthToken from '../../chromeMessaging/getAuthToken';
 
 
 const { Panel } = Collapse;

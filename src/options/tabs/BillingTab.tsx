@@ -3,7 +3,7 @@ import styled from 'styled-components';
 
 import functions from '../../firebase/functions'
 import { UserData } from '../../types/backendApi';
-import getFirebaseAuthToken from '../../chromeMessaging/getFirebaseAuthToken'; 
+import getFirebaseAuthToken from '../../chromeMessaging/getAuthToken'; 
 import { Payment } from '../../types/backendApi';
 
 

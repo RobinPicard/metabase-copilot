@@ -1,6 +1,3 @@
-import { getFunctions } from 'firebase/functions';
-
-import app from './app';
 import { BACKEND_BASE_URL_DEV, BACKEND_BASE_URL_PROD } from '../constants/firebaseBaseUrl';
 
 
@@ -18,11 +15,6 @@ if (FIREBASE_ENV === 'prod') {
 
 class FirebaseFunctionsCaller {
   private static instance: FirebaseFunctionsCaller;
-  private functions: ReturnType<typeof getFunctions>;
-
-  private constructor() {
-    this.functions = getFunctions(app);
-  }
 
   public static getInstance(): FirebaseFunctionsCaller {
     if (!FirebaseFunctionsCaller.instance) {
@@ -60,16 +52,31 @@ class FirebaseFunctionsCaller {
     if (!response.ok) {
       let errorMessage = "";
       try {
-        const data = await response.json();
-        console.error("Error calling function", data);
-        errorMessage = data.error;
-      } catch {
-        console.error("Unexpected error occurred");
+        const contentType = response.headers.get('content-type');
+        
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          console.error("Error calling function", data);
+          errorMessage = data.error;
+        } else {
+          // Handle non-JSON responses (like HTML error pages)
+          const textResponse = await response.text();
+          console.error("Received non-JSON error response:", textResponse);
+          errorMessage = `Server returned ${response.status} ${response.statusText}`;
+        }
+      } catch (error) {
+        console.error("Unexpected error occurred", error);
         errorMessage = "An unexpected error occurred, sorry for the inconvenience. Please refresh the page and try again.";
       }
       throw new Error(errorMessage);
     }
   
+    // Check content type before parsing JSON
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('Server returned non-JSON response');
+    }
+    
     return response.json();
   }
 

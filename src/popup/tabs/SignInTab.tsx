@@ -9,14 +9,13 @@ interface SignInTabProps {
   user: UserData;
   signIn: () => void;
   upgrade: () => void;
-  subscriptionUrl: string;
   setActiveTab: (tab: "signIn" | "apiKey") => void;
   errorMessage: string;
   setErrorMessage: (message: string) => void;
 }
 
 
-const SignInTab: React.FC<SignInTabProps> = ({ user, signIn, upgrade, subscriptionUrl, setActiveTab, errorMessage, setErrorMessage }) => {
+const SignInTab: React.FC<SignInTabProps> = ({ user, signIn, upgrade, setActiveTab, errorMessage, setErrorMessage }) => {
 
   let status = null;
   if (!user) {
@@ -111,7 +110,7 @@ const SignInTab: React.FC<SignInTabProps> = ({ user, signIn, upgrade, subscripti
               <li>Collaborate with multiple users</li>
               <li>Manage a shared set of database schema settings</li>
             </ul>
-            Cost: $10/user/month<br/>
+            Cost: $15/user/month<br/>
           </UpgradeExplanation>
         </>
       )
