@@ -1,13 +1,15 @@
+/* FOR INFORMATION ONLY, DO NOT USE CSS VARIABLES, COPY THE VALUES */
 :root {
   --dark-blue: #509ee3;
-  --dark-blue-hover: rgba(80, 158, 227, 0.88);
+  --dark-blue-hover: #509ee3e0;
   --light-blue: #e6f2ff;
-  --background-blue: rgb(249, 251, 252);
-  --light-grey: rgb(238, 236, 236);
-  --neutral-grey: rgb(231, 229, 229);
-  --dark-grey: rgb(105, 110, 123);
-  --black: rgb(76, 87, 115);
+  --background-blue: #f9fbfc;
+  --light-grey: #eeecec;
+  --neutral-grey: #e7e5e5;
+  --dark-grey: #696e7b;
+  --black: #4c5773;
   --dark-red: #931e2a;
+  --dark-red-hover: #b32e3a;
   --light-red: #ffebed;
 
   --main-font: 'Lato', sans-serif;
@@ -15,7 +17,7 @@
 }
 
 body {
-  font-family: var(--main-font);
-  background-color: var(--background-blue);
-  color: var(--black);
+  font-family: 'Lato', sans-serif;;
+  background-color: #f9fbfc;
+  color: #4c5773;
 }

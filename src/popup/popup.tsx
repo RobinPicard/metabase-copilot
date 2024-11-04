@@ -195,7 +195,7 @@ const Header = styled.header`
   gap: 10px;
   width: 100%;
   height: 72px;
-  border-bottom: 1px solid var(--light-grey);
+  border-bottom: 1px solid #eeecec;
   flex: none;
   align-self: stretch;
   flex-grow: 0;
