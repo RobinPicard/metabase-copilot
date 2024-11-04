@@ -214,7 +214,7 @@ const BodyContainer = styled.div`
 
 const Description = styled.div`
   font-size: 14px;
-  color: var(--black);
+  color: #4c5773;
   line-height: 20px;
 `;
 
@@ -223,7 +223,7 @@ const UpgradeExplanation = styled.div`
   background-color: white;
   padding: 16px;
   border-radius: 8px;
-  border: 1px solid var(--dark-blue);
+  border: 1px solid #509ee3;
   margin-top: 12px;
 
   ul {
@@ -270,7 +270,7 @@ const SignInUpgradeButton = styled.div`
   font-size: 14px;
   font-weight: 500;
   color: white;
-  background-color: var(--dark-blue);
+  background-color: #509ee3;
   border-radius: 6px;
   padding: 10px 24px;
   box-sizing: border-box;
@@ -278,7 +278,7 @@ const SignInUpgradeButton = styled.div`
   transition: 200ms linear;
 
   &:hover {
-    background-color: var(--dark-blue-hover);
+    background-color: #509ee3e0;
   }
 `;
 

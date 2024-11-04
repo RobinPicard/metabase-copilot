@@ -219,12 +219,12 @@ const Root = styled.div`
 const NoDatabaseSchemaMessage = styled.div`
   font-size: 14px;
   line-height: 20px;
-  color: var(--black);
+  color: #4c5773;
 `;
 
 const Description = styled.div`
   font-size: 14px;
-  color: var(--black);
+  color: #4c5773;
   margin-bottom: 24px;
   line-height: 20px;
 `;
@@ -238,7 +238,7 @@ const TableRow = styled.div`
 
 const TableName = styled.div`
   flex: 1;
-  color: var(--black);
+  color: #4c5773;
 `;
 
 const TableCheckbox = styled.div`
@@ -260,20 +260,20 @@ const SchemaHeader = styled.div`
   display: flex;
   justify-content: space-between;
   width: 100%;
-  color: var(--black);
+  color: #4c5773;
   background-color: white;
 `;
 
 const SchemaName = styled.div`
   flex: 1;
-  color: var(--black);
+  color: #4c5773;
 `;
 
 const SchemaTokens = styled.div`
   text-align: right;
   padding-right: 8px;
   width: 100px;
-  color: var(--black);
+  color: #4c5773;
 `;
 
 const SchemaCheckbox = styled.div`
@@ -295,7 +295,7 @@ const DatabaseTitle = styled.h2`
 const DatabaseTokens = styled.span`
   margin-left: 16px;
   font-size: 14px;
-  color: var(--black);
+  color: #4c5773;
 `;
 
 const SaveButtonContainer = styled.div`
@@ -308,9 +308,9 @@ const SaveButton = styled.div`
   height: 36px;
   line-height: 36px;
   padding: 0px 16px;
-  background-color: var(--dark-blue);
+  background-color: #509ee3;
   border-radius: 5px;
-  border: 1px solid var(--dark-blue);
+  border: 1px solid #509ee3;
   cursor: pointer;
   font-weight: 500;
   font-size: 14px;
@@ -318,7 +318,7 @@ const SaveButton = styled.div`
   color: white;
 
   &:hover {
-    background-color: var(--dark-blue-hover);
+    background-color: #509ee3e0;
   }
 `;
 
@@ -327,11 +327,11 @@ const StyledCheckbox = styled(Checkbox)`
     transition: all 0.2s ease-out;
   }
   .ant-checkbox-checked .ant-checkbox-inner {
-    background-color: var(--dark-blue);
-    border-color: var(--dark-blue);
+    background-color: #509ee3;
+    border-color: #509ee3;
   }
   .ant-checkbox-checked::after {
-    border-color: var(--dark-blue);
+    border-color: #509ee3;
     transition: all 0.2s ease-out;
   }
   .ant-checkbox-inner::after {

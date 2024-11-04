@@ -161,7 +161,7 @@ const Root = styled.div`
 
 const Description = styled.div`
   font-size: 14px;
-  color: var(--black);
+  color: #4c5773;
   line-height: 20px;
 `;
 
@@ -184,7 +184,7 @@ const TabsContainer = styled.div`
   position: sticky;
   top: 0;
   z-index: 1;
-  background-color: var(--background-blue);
+  background-color: #f9fbfc;
   box-sizing: content-box;
 `;
 
@@ -197,8 +197,8 @@ const Tab = styled.div<{ isActive: boolean }>`
   align-items: center;
   font-weight: 700;
   font-size: 13px;
-  border-bottom: ${({ isActive }) => (isActive ? '2px solid var(--dark-blue)' : 'none')};
-  color: ${({ isActive }) => (isActive ? 'var(--dark-blue)' : 'var(--black)')};
+  border-bottom: ${({ isActive }) => (isActive ? '2px solid #509ee3' : 'none')};
+  color: ${({ isActive }) => (isActive ? '#509ee3' : '#4c5773')};
 `;
 
 const TabContentContainer = styled.div`
@@ -224,13 +224,13 @@ const FeedbackMessage = styled.div`
   align-items: flex;
 
   &.error {
-    background-color: var(--light-red);
-    border: 1px solid var(--dark-red);
+    background-color: #ffebed;
+    border: 1px solid #931e2a;
   }
 
   &.info {
-    background-color: var(--light-blue);
-    border: 1px solid var(--dark-blue);
+    background-color: #e6f2ff;
+    border: 1px solid #509ee3;
   }
 `;
 
@@ -239,11 +239,11 @@ const FeedbackText = styled.p`
   font-size: 14px;
 
   &.error {
-    color: var(--dark-red);
+    color: #931e2a;
   }
 
   &.info {
-    color: var(--black);
+    color: #4c5773;
   }
 `;
 

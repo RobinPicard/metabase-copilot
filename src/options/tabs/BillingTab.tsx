@@ -243,13 +243,13 @@ const StatusContainer = styled.div`
 
 const Description = styled.div`
   font-size: 14px;
-  color: var(--black);
+  color: #4c5773;
   line-height: 20px;
 `;
 
 const CostBlockContainer = styled.div`
   width: 100%;
-  border: 1px solid var(--dark-blue);
+  border: 1px solid #509ee3;
   border-radius: 8px;
   padding: 24px;
   box-sizing: border-box;
@@ -267,12 +267,12 @@ const CostRow = styled.div`
 const CostLabel = styled.span`
   font-weight: 600;
   width: 240px;
-  color: var(--black);
+  color: #4c5773;
   font-size: 13px;
 `;
 
 const CostValue = styled.span`
-  color: var(--black);
+  color: #4c5773;
   font-size: 13px;
 `;
 
@@ -302,21 +302,21 @@ const Button = styled.div`
 const StripeSubscribeButton = styled(Button)`
   background-color: #007bff;
   color: white;
-  border: 1px solid var(--dark-blue);
-  background-color: var(--dark-blue);
+  border: 1px solid #509ee3;
+  background-color: #509ee3;
 
   &:hover {
-    background-color: var(--dark-blue-hover);
+    background-color: #509ee3e0;
   }
 `;
 
 const CancelSubscriptionButton = styled(Button)`
   background-color: white;
-  color: var(--dark-red);
-  border: 1px solid var(--dark-red);
+  color: #931e2a;
+  border: 1px solid #931e2a;
 
   &:hover {
-    background-color: var(--light-red);
+    background-color: #ffebed;
   }
 `;
 
@@ -325,7 +325,7 @@ const CancelSubscriptionButton = styled(Button)`
 const PaymentList = styled.div`
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--neutral-grey);
+  border: 1px solid #e7e5e5;
   border-radius: 8px;
   overflow: hidden;
   background-color: white;
@@ -337,7 +337,7 @@ const PaymentListHeader = styled.div`
   gap: 16px;
   padding: 12px 16px;
   font-weight: bold;
-  border-bottom: 1px solid var(--neutral-grey);
+  border-bottom: 1px solid #e7e5e5;
 `;
 
 const PaymentItem = styled.div`
@@ -346,7 +346,7 @@ const PaymentItem = styled.div`
   gap: 16px;
   align-items: center;
   padding: 18px 16px;
-  border-bottom: 1px solid var(--neutral-grey);
+  border-bottom: 1px solid #e7e5e5;
 
   &:last-child {
     border-bottom: none;
