@@ -447,7 +447,7 @@ const CreateCompanyCost = styled.div`
   background-color: #cce6ff21;
   padding: 16px;
   border-radius: 8px;
-  border: 1px solid #ebf3ff;
+  border: 1px solid #e7e5e5;
 `;
 
 // user profile

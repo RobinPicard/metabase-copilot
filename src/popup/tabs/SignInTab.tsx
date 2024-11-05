@@ -101,11 +101,11 @@ const SignInTab: React.FC<SignInTabProps> = ({ user, signIn, upgrade, setActiveT
         <>
           <Description>
             Hello {getUserDisplayName()}!<br/><br/>
-            Upgrade to have access to all the features of Metabase Copilot!
+            You're <b>all set</b> to use Metabase Copilot. Open Metabase to discover the extension's features!
           </Description>
           <UpgradeExplanation>
-            Premium features:<br/>
-            <ul>
+            Upgrade to premium to:<br/>
+            <ul style={{ marginTop: 8, marginBottom: 8 }}>
               <li>Make unlimited queries</li>
               <li>Collaborate with multiple users</li>
               <li>Manage a shared set of database schema settings</li>

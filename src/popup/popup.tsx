@@ -10,6 +10,7 @@ import {
 import functions from '../firebase/functions';
 import ApiKeyTab from './tabs/ApiKeyTab';
 import SignInTab from './tabs/SignInTab';
+import LoadingAnimation from './tabs/LoadingAnimation';
 import { ConfigDict } from '../types/chromeStorage'
 import { UserData } from '../types/backendApi'
 import getAuthToken from '../chromeMessaging/getAuthToken';
@@ -166,7 +167,7 @@ const Popup: React.FC = () => {
         <HeaderTitle>Metabase Copilot</HeaderTitle>
       </Header>
       <TabContentContainer>
-        {isLoading ? <div></div> : renderTabContent()}
+        {isLoading ? <LoadingAnimation/> : renderTabContent()}
       </TabContentContainer>
     </Root>
   );
