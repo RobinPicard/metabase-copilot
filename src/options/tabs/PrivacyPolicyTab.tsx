@@ -34,7 +34,7 @@ const PrivacyPolicyTab = () => {
 
 const Description = styled.div`
   font-size: 14px;
-  color: #4c5773;
+  color: var(--black);
   line-height: 20px;
 `;
 

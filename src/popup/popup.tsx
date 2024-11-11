@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import styled from 'styled-components';
 
+import './popup.css';
 import icon512 from '../../assets/icon512.png';
 import {
   storageKeyLocalConfig,
@@ -196,7 +197,7 @@ const Header = styled.header`
   gap: 10px;
   width: 100%;
   height: 72px;
-  border-bottom: 1px solid #eeecec;
+  border-bottom: 1px solid var(--light-grey);
   flex: none;
   align-self: stretch;
   flex-grow: 0;

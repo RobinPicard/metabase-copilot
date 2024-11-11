@@ -1,4 +1,3 @@
-/* FOR INFORMATION ONLY, DO NOT USE CSS VARIABLES, COPY THE VALUES */
 :root {
   --dark-blue: #509ee3;
   --dark-blue-hover: #509ee3e0;
@@ -18,6 +17,6 @@
 
 body {
   font-family: 'Lato', sans-serif;
-  background-color: #f9fbfc;
-  color: #4c5773;
+  background-color: var(--background-blue);
+  color: var(--black);
 }

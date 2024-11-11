@@ -401,7 +401,7 @@ const Button = styled.div<{ disabled?: boolean }>`
   font-size: 14px;
   font-weight: 500;
   color: white;
-  background-color: #509ee3;
+  background-color: var(--dark-blue);
   border-radius: 6px;
   padding: 10px 16px;
   box-sizing: border-box;
@@ -409,7 +409,7 @@ const Button = styled.div<{ disabled?: boolean }>`
   transition: 200ms linear;
 
   &:hover {
-    background-color: ${props => props.disabled ? '#509ee3' : '#509ee3e0'};
+    background-color: ${props => props.disabled ? 'var(--dark-blue)' : 'var(--dark-blue-hover)'};
   }
 `;
 
@@ -447,7 +447,7 @@ const CreateCompanyCost = styled.div`
   background-color: #cce6ff21;
   padding: 16px;
   border-radius: 8px;
-  border: 1px solid #e7e5e5;
+  border: 1px solid var(--neutral-grey);
 `;
 
 // user profile
@@ -461,7 +461,7 @@ const UserProfileWrapper = styled.div`
 
 const UserProfileContainer = styled.div`
   width: 100%;
-  border: 1px solid #509ee3;
+  border: 1px solid var(--dark-blue);
   border-radius: 8px;
   padding: 24px;
   box-sizing: border-box;
@@ -483,12 +483,12 @@ const UserProfileRow = styled.div`
 const UserProfileLabel = styled.span`
   font-weight: 600;
   width: 120px;
-  color: #4c5773;
+  color: var(--black);
   font-size: 13px;
 `;
 
 const UserProfileValue = styled.span`
-  color: #4c5773;
+  color: var(--black);
   font-size: 13px;
 `;
 
@@ -504,7 +504,7 @@ const AddUserSection = styled.div`
 const UserList = styled.div`
   display: flex;
   flex-direction: column;
-  border: 1px solid #e7e5e5;
+  border: 1px solid var(--neutral-grey);
   border-radius: 8px;
   overflow: hidden;
   background-color: white;
@@ -516,7 +516,7 @@ const UserListHeader = styled.div`
   gap: 16px;
   padding: 12px 16px;
   font-weight: bold;
-  border-bottom: 1px solid #e7e5e5;
+  border-bottom: 1px solid var(--neutral-grey);
 `;
 
 const UserItem = styled.div`
@@ -525,7 +525,7 @@ const UserItem = styled.div`
   gap: 16px;
   align-items: center;
   padding: 12px 16px;
-  border-bottom: 1px solid #e7e5e5;
+  border-bottom: 1px solid var(--neutral-grey);
 
   &:last-child {
     border-bottom: none;
@@ -568,11 +568,11 @@ const DeleteButton = styled(Button)`
   padding: 6px 12px;
   font-size: 12px;
   background-color: white;
-  color: #931e2a;
-  border: 1px solid #931e2a;
+  color: var(--dark-red);
+  border: 1px solid var(--dark-red);
 
   &:hover {
-    background-color: #ffebed;
+    background-color: var(--light-red);
   }
 `;
 
@@ -587,7 +587,7 @@ const UserRole = styled.span`
 
 const AddUserCard = styled.div`
   background-color: white;
-  border: 1px solid #eeecec;
+  border: 1px solid var(--light-grey);
   border-radius: 8px;
   padding: 24px;
   margin-bottom: 12px;
@@ -602,12 +602,12 @@ const SubTitle = styled.span`
 const NewUserInput = styled.input`
   padding: 6px;
   border-radius: 4px;
-  border: 1px solid #e7e5e5;
+  border: 1px solid var(--neutral-grey);
   flex-grow: 1;
   outline: none;
 
   &:focus {
-    outline: solid #509ee3;
+    outline: solid var(--dark-blue);
   }
 `;
 
@@ -657,19 +657,19 @@ const ModalButton = styled(Button)`
 `;
 
 const ConfirmButton = styled(ModalButton)`
-  background-color: #931e2a;
+  background-color: var(--dark-red);
 
   &:hover {
-    background-color: #b32e3a;
+    background-color: var(--dark-red-hover);
   }
 `;
 
 const CancelButton = styled(ModalButton)`
-  background-color: #e7e5e5;
-  color: #4c5773;
+  background-color: var(--neutral-grey);
+  color: var(--black);
 
   &:hover {
-    background-color: #eeecec;
+    background-color: var(--light-grey);
   }
 `;
 

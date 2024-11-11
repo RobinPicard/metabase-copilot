@@ -1,5 +1,22 @@
+:root {
+  --dark-blue: #509ee3;
+  --dark-blue-hover: #509ee3e0;
+  --light-blue: #e6f2ff;
+  --background-blue: #f9fbfc;
+  --light-grey: #eeecec;
+  --neutral-grey: #e7e5e5;
+  --dark-grey: #696e7b;
+  --black: #4c5773;
+  --dark-red: #931e2a;
+  --dark-red-hover: #b32e3a;
+  --light-red: #ffebed;
+
+  --main-font: 'Lato', sans-serif;
+  --mono-font: 'Monaco', monospace;
+}
+
 body {
   font-family: 'Lato', sans-serif;
-  background-color: #f9fbfc;
-  color: #4c5773;
+  background-color: var(--background-blue);
+  color: var(--black);
 }

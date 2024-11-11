@@ -8,7 +8,7 @@
   max-width: 400px;
   max-height: 70%;
   padding: 0px 0px 24px 0px;
-  background-color: #F9FBFC;
+  background-color: var(--background-blue);
   border-radius: 5px;
   gap: 0px;
   border: 1px solid rgb(81, 158, 227);
