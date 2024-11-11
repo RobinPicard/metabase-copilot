@@ -178,8 +178,8 @@ const StatusValue = styled.span<{ status?: string }>`
   font-weight: 400;
   background-color: ${props => 
     !props.status || props.status === "error" ? "#EDEDED" :
-    props.status === "invalid" ? "#ffebed" :
-    props.status === "valid" ? "#e6f2ff" : ""
+    props.status === "invalid" ? "var(--light-red)" :
+    props.status === "valid" ? "var(--light-blue)" : ""
   };
 `;
 
@@ -233,7 +233,7 @@ const ModelButton = styled.div<{ isSelected: boolean }>`
   margin: 0px 4px;
   cursor: pointer;
   font-weight: ${props => props.isSelected ? '600' : '400'};
-  border-bottom: ${props => props.isSelected ? '2px solid #509ee3' : '2px solid transparent'};
+  border-bottom: ${props => props.isSelected ? '2px solid var(--dark-blue)' : '2px solid transparent'};
 `;
 
 // input
@@ -262,7 +262,7 @@ const ApiInput = styled.input`
   height: 24px;
   background-color: transparent;
   border: none;
-  border-bottom: 1px solid #e7e5e5;
+  border-bottom: 1px solid var(--neutral-grey);
   font-weight: 400;
   font-size: 12px;
   line-height: 16px;
@@ -291,7 +291,7 @@ const SubmitContainer = styled.div`
 const ErrorMessage = styled.div`
   font-size: 12px;
   line-height: 12px;
-  color: #931e2a;
+  color: var(--dark-red);
 `;
 
 const SubmitButton = styled.div`
@@ -302,7 +302,7 @@ const SubmitButton = styled.div`
   font-size: 14px;
   font-weight: 500;
   color: white;
-  background-color: #509ee3;
+  background-color: var(--dark-blue);
   border-radius: 6px;
   padding: 10px 24px;
   box-sizing: border-box;
@@ -310,7 +310,7 @@ const SubmitButton = styled.div`
   transition: 200ms linear;
 
   &:hover {
-    background-color: #509ee3e0;
+    background-color: var(--dark-blue-hover);
   }
 `;
 

@@ -56,7 +56,10 @@ module.exports = {
       filename: 'options.html',
       chunks: ['options'],
     }),
-    new MiniCssExtractPlugin(),
+    new MiniCssExtractPlugin({
+      filename: '[name].css',
+      chunkFilename: '[id].css',
+    }),
     new webpack.DefinePlugin({
       __FIREBASE_ENV__: JSON.stringify(process.env.FIREBASE_ENV || 'dev')
     })

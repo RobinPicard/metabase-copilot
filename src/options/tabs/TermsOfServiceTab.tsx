@@ -4,7 +4,7 @@ import styled from "styled-components";
 const TermsOfServiceTab = () => {
   return (
     <Description>
-      Welcome to Metabase Copilot. These Terms of Service (“Terms”) govern your use of the Extension, including both free and paid tiers. By installing or using the Extension, you agree to these Terms. If you do not agree, please do not use the Extension.
+      Welcome to Metabase Copilot. These Terms of Service ("Terms") govern your use of the Extension, including both free and paid tiers. By installing or using the Extension, you agree to these Terms. If you do not agree, please do not use the Extension.
       <br/>
       <br/>
       <b>1. Overview</b>
@@ -26,7 +26,7 @@ const TermsOfServiceTab = () => {
       <b>3. Free and Paid Tiers</b>
       <br/>
       <br/>
-      The Extension offers a free tier with limited features and a paid tier with additional functionality. The features available in each tier are clearly indicated in the Extension’s documentation and pricing page.
+      The Extension offers a free tier with limited features and a paid tier with additional functionality. The features available in each tier are clearly indicated in the Extension's documentation and pricing page.
       <br/>
       <br/>
       Free Tier:
@@ -64,7 +64,7 @@ const TermsOfServiceTab = () => {
       <b>8. Limitation of Liability</b>
       <br/>
       <br/>
-      The Extension is provided “as is.” We make no warranties, express or implied, regarding its functionality or availability.
+      The Extension is provided "as is." We make no warranties, express or implied, regarding its functionality or availability.
       <br/>
       <br/>
       <b>9. Changes to Terms</b>
@@ -84,7 +84,7 @@ const TermsOfServiceTab = () => {
 
 const Description = styled.div`
   font-size: 14px;
-  color: #4c5773;
+  color: var(--black);
   line-height: 20px;
 `;
 

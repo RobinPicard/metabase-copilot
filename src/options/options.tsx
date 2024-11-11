@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import styled from 'styled-components';
 
+import './options.css';
 import functions from '../firebase/functions';
 import AccountSettingsTab from './tabs/AccountSettingsTab';
 import SchemaOptionsTab from './tabs/SchemaOptionsTab';
@@ -161,7 +162,7 @@ const Root = styled.div`
 
 const Description = styled.div`
   font-size: 14px;
-  color: #4c5773;
+  color: var(--black);
   line-height: 20px;
 `;
 
@@ -184,7 +185,7 @@ const TabsContainer = styled.div`
   position: sticky;
   top: 0;
   z-index: 1;
-  background-color: #f9fbfc;
+  background-color: var(--background-blue);
   box-sizing: content-box;
 `;
 
@@ -197,8 +198,8 @@ const Tab = styled.div<{ isActive: boolean }>`
   align-items: center;
   font-weight: 700;
   font-size: 13px;
-  border-bottom: ${({ isActive }) => (isActive ? '2px solid #509ee3' : 'none')};
-  color: ${({ isActive }) => (isActive ? '#509ee3' : '#4c5773')};
+  border-bottom: ${({ isActive }) => (isActive ? '2px solid var(--dark-blue)' : 'none')};
+  color: ${({ isActive }) => (isActive ? 'var(--dark-blue)' : 'var(--black)')};
 `;
 
 const TabContentContainer = styled.div`
@@ -224,13 +225,13 @@ const FeedbackMessage = styled.div`
   align-items: flex;
 
   &.error {
-    background-color: #ffebed;
-    border: 1px solid #931e2a;
+    background-color: var(--light-red);
+    border: 1px solid var(--dark-red);
   }
 
   &.info {
-    background-color: #e6f2ff;
-    border: 1px solid #509ee3;
+    background-color: var(--light-blue);
+    border: 1px solid var(--dark-blue);
   }
 `;
 
@@ -239,11 +240,11 @@ const FeedbackText = styled.p`
   font-size: 14px;
 
   &.error {
-    color: #931e2a;
+    color: var(--dark-red);
   }
 
   &.info {
-    color: #4c5773;
+    color: var(--black);
   }
 `;
 

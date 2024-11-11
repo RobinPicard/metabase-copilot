@@ -101,11 +101,11 @@ const SignInTab: React.FC<SignInTabProps> = ({ user, signIn, upgrade, setActiveT
         <>
           <Description>
             Hello {getUserDisplayName()}!<br/><br/>
-            Upgrade to have access to all the features of Metabase Copilot!
+            You're <b>all set</b> to use Metabase Copilot. Open Metabase to discover the extension's features!
           </Description>
           <UpgradeExplanation>
-            Premium features:<br/>
-            <ul>
+            Upgrade to premium to:<br/>
+            <ul style={{ marginTop: 8, marginBottom: 8 }}>
               <li>Make unlimited queries</li>
               <li>Collaborate with multiple users</li>
               <li>Manage a shared set of database schema settings</li>
@@ -214,7 +214,7 @@ const BodyContainer = styled.div`
 
 const Description = styled.div`
   font-size: 14px;
-  color: #4c5773;
+  color: var(--black);
   line-height: 20px;
 `;
 
@@ -223,7 +223,7 @@ const UpgradeExplanation = styled.div`
   background-color: white;
   padding: 16px;
   border-radius: 8px;
-  border: 1px solid #509ee3;
+  border: 1px solid var(--dark-blue);
   margin-top: 12px;
 
   ul {
@@ -270,7 +270,7 @@ const SignInUpgradeButton = styled.div`
   font-size: 14px;
   font-weight: 500;
   color: white;
-  background-color: #509ee3;
+  background-color: var(--dark-blue);
   border-radius: 6px;
   padding: 10px 24px;
   box-sizing: border-box;
@@ -278,7 +278,7 @@ const SignInUpgradeButton = styled.div`
   transition: 200ms linear;
 
   &:hover {
-    background-color: #509ee3e0;
+    background-color: var(--dark-blue-hover);
   }
 `;
 

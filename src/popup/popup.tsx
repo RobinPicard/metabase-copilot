@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import styled from 'styled-components';
 
+import './popup.css';
 import icon512 from '../../assets/icon512.png';
 import {
   storageKeyLocalConfig,
@@ -10,6 +11,7 @@ import {
 import functions from '../firebase/functions';
 import ApiKeyTab from './tabs/ApiKeyTab';
 import SignInTab from './tabs/SignInTab';
+import LoadingAnimation from './tabs/LoadingAnimation';
 import { ConfigDict } from '../types/chromeStorage'
 import { UserData } from '../types/backendApi'
 import getAuthToken from '../chromeMessaging/getAuthToken';
@@ -166,7 +168,7 @@ const Popup: React.FC = () => {
         <HeaderTitle>Metabase Copilot</HeaderTitle>
       </Header>
       <TabContentContainer>
-        {isLoading ? <div></div> : renderTabContent()}
+        {isLoading ? <LoadingAnimation/> : renderTabContent()}
       </TabContentContainer>
     </Root>
   );
@@ -195,7 +197,7 @@ const Header = styled.header`
   gap: 10px;
   width: 100%;
   height: 72px;
-  border-bottom: 1px solid #eeecec;
+  border-bottom: 1px solid var(--light-grey);
   flex: none;
   align-self: stretch;
   flex-grow: 0;
