@@ -137,6 +137,12 @@ const Popup: React.FC = () => {
     }
   };
 
+  const updateModel = async (modelName: string) => {
+    const token = await getAuthToken();
+    const result = await functions.callFunction('api/updateUserModel', token, "POST", {modelName: modelName});
+    setUser(prevUser => prevUser ? { ...prevUser, modelName } : null);
+  };
+
   ////////// rendering //////////
   
   const renderTabContent = () => {
@@ -157,6 +163,7 @@ const Popup: React.FC = () => {
           setActiveTab={setActiveTab}
           errorMessage={errorMessage}
           setErrorMessage={setErrorMessage}
+          updateModel={updateModel}
         />;
     }
   };

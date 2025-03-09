@@ -65,10 +65,6 @@ let isOperationRunning: boolean = false;
 
 // Function to set a listener for store updates
 function setStoreListener(): void {
-  // Inject the script
-  const injectedScriptStoreUpdates = document.createElement('script');
-  injectedScriptStoreUpdates.src = chrome.runtime.getURL('dist/injectedScriptStoreUpdates.js');
-  document.head?.appendChild(injectedScriptStoreUpdates);
 
   // Listen for messages from the script about updates of the store states
   window.addEventListener('message', (event: MessageEvent) => {
@@ -85,6 +81,11 @@ function setStoreListener(): void {
       storeDatabaseSelected = event.data.payload;
     }
   });
+
+  // Inject the script
+  const injectedScriptStoreUpdates = document.createElement('script');
+  injectedScriptStoreUpdates.src = chrome.runtime.getURL('dist/injectedScriptStoreUpdates.js');
+  document.head?.appendChild(injectedScriptStoreUpdates);
 }
 
 
@@ -92,6 +93,8 @@ function setStoreListener(): void {
 
 
 function setupElements() {
+
+  console.log("setupElements");
 
   function onElementAddedOrRemoved() {
     setupQueryEditingElements();
@@ -219,11 +222,12 @@ function setupElements() {
     subtree: true,
   };
   observer.observe(targetElement, config);
+
+  onElementAddedOrRemoved();
 } 
 
 
 ////////////// Query-edition functions //////////////
-
 
 function mainPromptQuery() {
 
@@ -530,6 +534,8 @@ function setFeedbackMessage(message: string, type: string) {
 
 
 function main() {
+
+  console.log("main");
 
   if (isContentScriptLoaded) {
     return;

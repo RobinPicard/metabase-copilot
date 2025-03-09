@@ -23,6 +23,7 @@ export interface UserData {
   lastQueryAt: {_seconds: number, _nanoseconds: number};
   dayQueriesCounter: number;
   createdAt: {_seconds: number, _nanoseconds: number};
+  modelName: string;
 }
 
 // Database Schema Options

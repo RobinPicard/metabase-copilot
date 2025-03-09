@@ -59,10 +59,15 @@ const BillingTab: React.FC<Props> = ({user, payments, setPayments, setFeedbackMe
   const handleClickCancelSubscription = async () => {
     try {
       const token = await getFirebaseAuthToken();
-      const result = await functions.callFunction('api/cancelSubscription', token, "POST");
+      const response = await functions.callFunction('api/cancelSubscription', token, "POST");
+      if (response.status === 200) {
+        setFeedbackMessage(['Your subscription has been canceled. You can still access all premium features until the end of the billing period.', 'info']);
+      } else {
+        throw new Error('Failed to cancel subscription');
+      }
     } catch (error) {
       console.error('Error canceling subscription:', error);
-      setFeedbackMessage(['Error canceling subscription, sorry. Please retry and reach out to support if the problem persists', 'error'])
+      setFeedbackMessage(['Error canceling subscription, sorry. Please retry and reach out to support if the problem persists', 'error']);
     }
   }
 

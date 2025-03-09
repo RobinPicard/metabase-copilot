@@ -30,9 +30,9 @@
     "styled-components": "^6.1.13"
   },
   "scripts": {
-    "build:dev": "FIREBASE_ENV=dev webpack --mode production",
-    "build:prod": "FIREBASE_ENV=prod webpack --mode production",
+    "build:dev": "NODE_ENV=development node build-manifest.js && FIREBASE_ENV=dev webpack --mode production",
+    "build:prod": "NODE_ENV=production node build-manifest.js && FIREBASE_ENV=prod webpack --mode production",
     "bundle": "zip bundle.zip -r manifest.json chrome_icons dist",
-    "start": "webpack serve --mode development"
+    "start": "NODE_ENV=development node build-manifest.js && webpack serve --mode development"
   }
 }

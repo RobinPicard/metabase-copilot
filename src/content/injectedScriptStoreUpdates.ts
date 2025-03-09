@@ -58,4 +58,7 @@ if (reduxStore) {
   };
 
   reduxStore.subscribe(onReduxStoreStateUpdate);
+  
+  // Send initial state when script is loaded
+  onReduxStoreStateUpdate();
 }

@@ -1,7 +1,7 @@
 import { getAuthTokenActionName } from "../constants/chromeMessaging";
 
 
-const getAuthToken = async (): Promise<string | null> => {
+const getFirebaseAuthToken = async (): Promise<string | null> => {
   const result = await chrome.runtime.sendMessage({action: getAuthTokenActionName})
   const token = result.token;
   if (token) {
@@ -11,4 +11,4 @@ const getAuthToken = async (): Promise<string | null> => {
 };
 
 
-export default getAuthToken;
+export default getFirebaseAuthToken;

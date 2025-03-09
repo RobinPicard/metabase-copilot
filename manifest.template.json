@@ -50,7 +50,7 @@
     "extension_pages": "script-src 'self'; object-src 'self';"
   },
   "oauth2": {
-    "client_id": "263144475527-5glkr0cdbde0imu9ga2tj4c7mqgasql8.apps.googleusercontent.com",
+    "client_id": "__OAUTH_CLIENT_ID__",
     "scopes": [
       "profile",
       "email"

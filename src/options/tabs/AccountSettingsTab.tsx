@@ -264,8 +264,8 @@ const AccountSettingsTab: React.FC<Props> = ({
           <CreateCompanyCost>
             Premium features:<br/>
             - make unlimited queries<br/>
-            - collaborate with multiple users<br/>
-            - manage a shared set of database schema settings<br/><br/>
+            - have access to the best models (Claude 3.7 Sonnet, o3-mini...)<br/>
+            - add multiple users to your company with shared settings<br/><br/>
             Cost: $15/user/month<br/>
           </CreateCompanyCost>
         </CreateCompanyContainer>
@@ -293,9 +293,9 @@ const AccountSettingsTab: React.FC<Props> = ({
                 <option key={key} value={key}>{value}</option>
               ))}
             </NewUserRoleSelect>
-            <Button onClick={handleAddUser} disabled={!newUserEmail.trim()}>
+            <AddUserButton onClick={handleAddUser} disabled={!newUserEmail.trim()}>
               Add User
-            </Button>
+            </AddUserButton>
           </AddUserSection>
         </AddUserCard>
 
@@ -501,6 +501,11 @@ const AddUserSection = styled.div`
   align-items: center;
 `;
 
+const AddUserButton = styled(Button)`
+  padding: 6px 12px;
+  font-size: 12px;
+`;
+
 const UserList = styled.div`
   display: flex;
   flex-direction: column;
@@ -589,7 +594,7 @@ const AddUserCard = styled.div`
   background-color: white;
   border: 1px solid var(--light-grey);
   border-radius: 8px;
-  padding: 24px;
+  padding: 18px;
   margin-bottom: 12px;
 `;
 

@@ -1,7 +1,68 @@
-import './feedbackMessageElement.css';
-
 import getComponentIdFromVariable from "../utils/getComponentIdFromVariable";
 
+// Create and append styles
+const styles = document.createElement('style');
+styles.textContent = `
+  #feedbackMessageElement {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    border-radius: 4px;
+    padding: 10px;
+    max-width: 300px;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  #feedbackMessageElement.error {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+  }
+
+  #feedbackMessageElement.success {
+    background-color: rgba(80, 158, 227, 0.2);
+    border: 1px solid rgb(80, 158, 227);
+  }
+
+  #feedbackMessageElement .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  #feedbackMessageElement .text {
+    margin: 0;
+    font-size: 14px;
+  }
+
+  #feedbackMessageElement .text.error {
+    color: #721c24;
+  }
+
+  #feedbackMessageElement .text.success {
+    color: rgb(80, 158, 227);
+  }
+
+  #feedbackMessageElement .close-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #feedbackMessageElement .close-button.error:hover svg path {
+    stroke: #5a1720;
+  }
+
+  #feedbackMessageElement .close-button.success:hover svg path {
+    stroke: #155724;
+  }
+`;
+document.head.appendChild(styles);
 
 const feedbackMessageElement = document.createElement('div');
 feedbackMessageElement.id = getComponentIdFromVariable({feedbackMessageElement});

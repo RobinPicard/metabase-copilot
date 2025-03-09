@@ -12,10 +12,48 @@ interface SignInTabProps {
   setActiveTab: (tab: "signIn" | "apiKey") => void;
   errorMessage: string;
   setErrorMessage: (message: string) => void;
+  updateModel: (modelName: string) => Promise<void>;
 }
 
+const models = [
+  {
+    name: "gemini-1.5-flash",
+    displayName: "Gemini 1.5 Flash",
+    isThinkingModel: false,
+  },
+  {
+    name: "gemini-2.0-flash",
+    displayName: "Gemini 2.0 Flash",
+    isThinkingModel: false,
+  },
+  {
+    name: "gpt-4o",
+    displayName: "GPT-4o",
+    isThinkingModel: false,
+  },
+  {
+    name: "o3-mini",
+    displayName: "o3-mini",
+    isThinkingModel: true,
+  },
+  {
+    name: "claude-3-5-sonnet",
+    displayName: "Claude 3.5 Sonnet",
+    isThinkingModel: false,
+  },
+  {
+    name: "claude-3-7-sonnet",
+    displayName: "Claude 3.7 Sonnet",
+    isThinkingModel: false,
+  },
+  {
+    name: "claude-3-7-sonnet-thinking",
+    displayName: "Claude 3.7 Sonnet Thinking",
+    isThinkingModel: true,
+  },
+]
 
-const SignInTab: React.FC<SignInTabProps> = ({ user, signIn, upgrade, setActiveTab, errorMessage, setErrorMessage }) => {
+const SignInTab: React.FC<SignInTabProps> = ({ user, signIn, upgrade, setActiveTab, errorMessage, setErrorMessage, updateModel }) => {
 
   let status = null;
   if (!user) {
@@ -107,8 +145,8 @@ const SignInTab: React.FC<SignInTabProps> = ({ user, signIn, upgrade, setActiveT
             Upgrade to premium to:<br/>
             <ul style={{ marginTop: 8, marginBottom: 8 }}>
               <li>Make unlimited queries</li>
-              <li>Collaborate with multiple users</li>
-              <li>Manage a shared set of database schema settings</li>
+              <li>Have access to the best models (Claude 3.7 Sonnet, o3-mini...)</li>
+              <li>Add multiple users to your company with shared settings</li>
             </ul>
             Cost: $15/user/month<br/>
           </UpgradeExplanation>
@@ -116,11 +154,34 @@ const SignInTab: React.FC<SignInTabProps> = ({ user, signIn, upgrade, setActiveT
       )
     } else if (status === "signedInPremium") {
       return (
-        <Description>
-          Hello {getUserDisplayName()}!<br/><br/>
-          You're all set, ready to user Metabase Copilot as part of {getCompanyDisplayName()}!<br/><br/>
-          Open the options page to access the settings.
-        </Description>
+        <>
+          <Description>
+            Hello {getUserDisplayName()}!<br/><br/>
+            You're all set, ready to user Metabase Copilot as part of {getCompanyDisplayName()}!<br/><br/>
+          </Description>
+          <ModelSelector>
+            <ModelTitle>Model selection:</ModelTitle>
+              <ModelsContainer>
+                {models.map((model) => (
+                <li key={model.name}>
+                  <ModelOption 
+                    isSelected={user.modelName === model.name}
+                    onClick={async () => {
+                      try {
+                        await updateModel(model.name);
+                      } catch (error) {
+                        setErrorMessage("Error updating model. Please try again.");
+                      }
+                    }}
+                  >
+                    {model.displayName}{model.isThinkingModel && "*"}
+                  </ModelOption>
+                </li>
+              ))}
+            </ModelsContainer>
+            <ModelNote>* These "thinking" models can take significantly longer to respond</ModelNote>
+          </ModelSelector>
+        </>
       )
     }
   }
@@ -282,5 +343,48 @@ const SignInUpgradeButton = styled.div`
   }
 `;
 
+const ModelSelector = styled.div`
+  width: 100%;
+  margin-top: 24px;
+`;
+
+const ModelTitle = styled.div`
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 12px;
+`;
+
+const ModelsContainer = styled.ul`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: repeat(3, auto) auto;
+  gap: 8px;
+  width: 100%;
+  list-style-type: disc;
+  padding-left: 16px;
+  margin: 0;
+
+  li:last-child {
+    grid-column: 1 / -1;
+    list-style-type: disc;
+  }
+`;
+
+const ModelOption = styled.div<{ isSelected: boolean }>`
+  padding: 4px 0;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: ${props => props.isSelected ? '800' : '400'};
+  color: ${props => props.isSelected ? 'var(--dark-blue)' : 'var(--black)'};
+  text-decoration: ${props => props.isSelected ? 'underline' : 'none'};
+  transition: all 200ms ease;
+`;
+
+const ModelNote = styled.div`
+  font-size: 12px;
+  color: var(--black);
+  font-style: italic;
+  margin-top: 24px;
+`;
 
 export default SignInTab;
