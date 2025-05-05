@@ -41,6 +41,8 @@ import getAuthToken from '../chromeMessaging/getAuthToken'
 
 import { storageKeyLocalConfig } from '../constants/chromeStorage'
 
+import { cleanupPopup } from '../components/promptQueryPopupElement'
+
 
 ////////////// global variables //////////////
 
@@ -58,6 +60,7 @@ let isContentScriptLoaded: boolean = false;
 let version: [number, number] = [50, 13]
 let previousQueryContents: string[] = [];
 let isOperationRunning: boolean = false;
+let promptQueryPopupPosition: { left: number; top: number } | null = null;
 
 
 ////////////// metabase redux store state's variables and listener //////////////
@@ -65,10 +68,6 @@ let isOperationRunning: boolean = false;
 
 // Function to set a listener for store updates
 function setStoreListener(): void {
-  // Inject the script
-  const injectedScriptStoreUpdates = document.createElement('script');
-  injectedScriptStoreUpdates.src = chrome.runtime.getURL('dist/injectedScriptStoreUpdates.js');
-  document.head?.appendChild(injectedScriptStoreUpdates);
 
   // Listen for messages from the script about updates of the store states
   window.addEventListener('message', (event: MessageEvent) => {
@@ -85,6 +84,11 @@ function setStoreListener(): void {
       storeDatabaseSelected = event.data.payload;
     }
   });
+
+  // Inject the script
+  const injectedScriptStoreUpdates = document.createElement('script');
+  injectedScriptStoreUpdates.src = chrome.runtime.getURL('dist/injectedScriptStoreUpdates.js');
+  document.head?.appendChild(injectedScriptStoreUpdates);
 }
 
 
@@ -92,6 +96,8 @@ function setStoreListener(): void {
 
 
 function setupElements() {
+
+  console.log("setupElements");
 
   function onElementAddedOrRemoved() {
     setupQueryEditingElements();
@@ -219,24 +225,80 @@ function setupElements() {
     subtree: true,
   };
   observer.observe(targetElement, config);
+
+  onElementAddedOrRemoved();
 } 
 
 
 ////////////// Query-edition functions //////////////
 
-
 function mainPromptQuery() {
+  console.log("mainPromptQuery called");
 
   if (isOperationRunning) {
-    return
+    console.log("Operation running, aborting");
+    return;
   }
-  
-  const queryEditorTextarea = getQueryEditorTextarea(version);
 
-  // Add promptQueryPopupElement to DOM with an event listener on pressing Enter
-  promptQueryButtonElement.appendChild(promptQueryPopupElement);
-  promptQueryPopupElement.focus();
-  promptQueryPopupElement.addEventListener('keypress', onPressEnterInsideElement);
+  // If popup is already open, close it and return
+  const existingPopup = document.getElementById(getComponentIdFromVariable({promptQueryPopupElement}));
+  if (existingPopup) {
+    console.log("Popup already exists, closing it");
+    cleanupPopup();
+    return;
+  }
+
+  // Get latest configDict to ensure we have the most recent position
+  chrome.storage.local.get([storageKeyLocalConfig], function(result) {
+    const latestConfigDict = result[storageKeyLocalConfig] || {};
+    const savedPosition = latestConfigDict.popupPosition;
+    
+    // Get viewport dimensions
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const popupWidth = 350; // Width from CSS
+    const popupHeight = 150; // Height from CSS
+    
+    let left: number;
+    let top: number;
+
+    if (savedPosition && typeof savedPosition.left === 'number' && typeof savedPosition.top === 'number') {
+      console.log("Restoring saved position", savedPosition);
+      // Ensure the popup stays within viewport bounds
+      left = Math.min(Math.max(0, savedPosition.left), viewportWidth - popupWidth);
+      top = Math.min(Math.max(0, savedPosition.top), viewportHeight - popupHeight);
+      console.log("Adjusted position for viewport", { left, top });
+    } else {
+      // Position below the button if no saved position
+      const button = document.getElementById(getComponentIdFromVariable({promptQueryButtonElement}));
+      if (button) {
+        const buttonRect = button.getBoundingClientRect();
+        const scrollX = window.scrollX;
+        const scrollY = window.scrollY;
+        left = buttonRect.left + scrollX + (buttonRect.width / 2) - (popupWidth / 2);
+        top = buttonRect.bottom + scrollY + 14;
+        
+        // Ensure default position stays within viewport bounds
+        left = Math.min(Math.max(0, left), viewportWidth - popupWidth);
+        top = Math.min(Math.max(0, top), viewportHeight - popupHeight);
+        console.log("Setting default position", { left, top });
+      } else {
+        console.log("Prompt button not found, using center position");
+        left = (viewportWidth - popupWidth) / 2;
+        top = (viewportHeight - popupHeight) / 2;
+      }
+    }
+
+    promptQueryPopupElement.style.left = `${left}px`;
+    promptQueryPopupElement.style.top = `${top}px`;
+    promptQueryPopupElement.style.transform = 'none';
+
+    document.body.appendChild(promptQueryPopupElement);
+    console.log("Popup appended to body");
+    
+    promptQueryPopupElement.focus();
+    promptQueryPopupElement.addEventListener('keypress', onPressEnterInsideElement);
+  });
 
   // Handle enter key inside the popup
   function onPressEnterInsideElement(event: KeyboardEvent) : void {
@@ -244,9 +306,10 @@ function mainPromptQuery() {
       event.preventDefault();
       isOperationRunning = true;
       pushPreviousQueryContent();
+      const textarea = promptQueryPopupElement.querySelector('textarea');
       if (user) {
         const payload = {
-          userPrompt: promptQueryPopupElement.value,
+          userPrompt: textarea.value,
           existingQuery: storeQueryContent,
           databaseId: storeDatabaseSelected,
         }
@@ -254,7 +317,7 @@ function mainPromptQuery() {
       } else if (configDict.status === 'valid') {
         const promptMessages = createPromptQueryMessages(
           storeQueryContent,
-          promptQueryPopupElement.value,
+          textarea.value,
           configDict.schema[storeDatabaseSelected]
         );
         chatgptStreamingRequest(configDict, promptMessages, onApiResponseData, onApiRequestError);
@@ -263,35 +326,14 @@ function mainPromptQuery() {
       } else {
         onApiRequestError("Sign in with the extension popup to use Metabase Copilot");
       }
-      cleanupPopup();
     }
   };
-
-  // Add event listener for clicks outside of promptQueryPopupElement
-  document.addEventListener('click', onClickOutsideElement);
-  function onClickOutsideElement(event: KeyboardEvent) : void {
-    if (
-      promptQueryButtonElement.contains(promptQueryPopupElement as Node)
-      && (!promptQueryPopupElement.contains(event.target as Node))
-      && (!promptQueryButtonElement.contains(event.target as Node))
-    ) {
-      cleanupPopup();
-    }
-  }
-
-  // remove the popup from the DOM and remove the listeners
-  function cleanupPopup() : void {
-    promptQueryPopupElement.value = '';
-    promptQueryPopupElement.remove();
-    promptQueryPopupElement.removeEventListener('keypress', onPressEnterInsideElement);
-    document.removeEventListener('click', onClickOutsideElement);
-  }
 
   function onApiResponseData(content: string, isFinished: boolean) : void {
     if (isFinished) {
       isOperationRunning = false;
     }
-    pasteTextIntoElement(queryEditorTextarea, content)
+    pasteTextIntoElement(getQueryEditorTextarea(version), content)
   }
 
   function onApiRequestError(errorMessage: string) : void {
@@ -306,7 +348,6 @@ function mainPromptQuery() {
     }
     isOperationRunning = false;
   }
-
 }
 
 
@@ -353,7 +394,7 @@ function mainDatabaseErrorFix() : void {
   }
   
   function onApiResponseData(content: string, isFinished: boolean) : void {
-    pasteTextIntoElement(queryEditorTextarea, content)
+    pasteTextIntoElement(getQueryEditorTextarea(version), content)
     if (isFinished) {
       isOperationRunning = false;
     }
@@ -530,6 +571,8 @@ function setFeedbackMessage(message: string, type: string) {
 
 
 function main() {
+
+  console.log("main");
 
   if (isContentScriptLoaded) {
     return;

@@ -193,7 +193,7 @@ const SchemaOptionsTab: React.FC<Props> = ({ user, databaseSchemaOptions, setDat
               <br/><br/>
               Limiting the number of tables selected for each database will improve the accuracy of the queries.
               <br/><br/>
-              Due to context window constraints, the database schema description for a database will be truncated if it's longer than 125.000 tokens.
+              Due to context window constraints, the database schema description for a database may be truncated if it's too long.
             </Description>
             {renderDatabases()}
             <SaveButtonContainer>

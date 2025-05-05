@@ -3,6 +3,7 @@ bundle/
 node_modules/
 *.zip
 bundle.zip
+privateREADME.md
 
 # Cache and temporary files
 .cache/
