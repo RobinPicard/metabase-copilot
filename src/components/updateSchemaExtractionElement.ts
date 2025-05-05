@@ -1,5 +1,3 @@
-import './updateSchemaExtractionElement.css';
-
 import loadImage from '../../assets/loadIcon.png'
 import loadGif from '../../assets/loadIcon.gif'
 import getComponentIdFromVariable from "../utils/getComponentIdFromVariable";

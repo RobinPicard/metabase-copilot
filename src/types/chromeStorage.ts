@@ -4,6 +4,10 @@ export interface ConfigDict {
   status?: 'error' | 'invalid' | 'valid';
   key?: string;
   modelName?: string;
+  popupPosition?: {
+    left: number;
+    top: number;
+  };
 }
 
 export interface DatabasesSchema {

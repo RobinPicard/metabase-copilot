@@ -1,5 +1,3 @@
-import './databaseErrorPopupElement.css';
-
 import dismissIcon from '../../assets/dismissIcon.png'
 import getComponentIdFromVariable from "../utils/getComponentIdFromVariable";
 

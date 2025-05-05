@@ -1,5 +1,3 @@
-import './revertQueryButtonElement.css';
-
 import getComponentIdFromVariable from "../utils/getComponentIdFromVariable";
 
 // Create and append styles

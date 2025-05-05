@@ -1,7 +1,6 @@
-import './promptQueryButtonElement.css';
-
 import magicWandIcon from '../../assets/magicWandIcon.png'
 import getComponentIdFromVariable from "../utils/getComponentIdFromVariable";
+import promptQueryPopupElement from './promptQueryPopupElement';
 
 // Create and append styles
 const styles = document.createElement('style');
@@ -99,12 +98,32 @@ promptQueryButtonElement.appendChild(textElement);
 promptQueryButtonElement.appendChild(tooltipElement);
 
 promptQueryButtonElement.addEventListener('click', () => {
-  promptQueryButtonElement.classList.add('clicked');
-});
-  
-promptQueryButtonElement.addEventListener('mouseleave', () => {
-  promptQueryButtonElement.classList.remove('clicked');
+  const popup = document.getElementById(getComponentIdFromVariable({promptQueryPopupElement}));
+  if (!popup) {
+    promptQueryButtonElement.classList.add('clicked');
+  }
 });
 
+promptQueryButtonElement.addEventListener('mouseleave', () => {
+  const popup = document.getElementById(getComponentIdFromVariable({promptQueryPopupElement}));
+  if (!popup) {
+    promptQueryButtonElement.classList.remove('clicked');
+  }
+});
+
+// Add observer to check if popup is present
+const observer = new MutationObserver((mutations) => {
+  const popup = document.getElementById(getComponentIdFromVariable({promptQueryPopupElement}));
+  if (popup) {
+    promptQueryButtonElement.classList.add('clicked');
+  } else {
+    promptQueryButtonElement.classList.remove('clicked');
+  }
+});
+
+observer.observe(document.body, {
+  childList: true,
+  subtree: true
+});
 
 export default promptQueryButtonElement;
