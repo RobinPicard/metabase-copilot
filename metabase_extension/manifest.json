@@ -1,19 +1,18 @@
 {
   "manifest_version": 3,
   "name": "Metabase Copilot",
-  "version": "3.0",
-  "description": "Add an AI assistant to Metabase to help you write SQL queries and analyze errors.",
+  "version": "4.0.1",
+  "description": "AI assistant for Metabase",
   "icons": {
-    "128": "chrome_icons/icon128.png",
-    "48": "chrome_icons/icon48.png"
+    "128": "chrome_icons/Icon128.png",
+    "48": "chrome_icons/Icon48.png"
   },
   "permissions": [
     "scripting",
     "storage",
     "tabs",
     "webNavigation",
-    "unlimitedStorage",
-    "identity"
+    "unlimitedStorage"
   ],
   "host_permissions": [
     "*://*/question*"
@@ -42,18 +41,10 @@
   "content_scripts": [
     {
       "matches": ["*://*/question*"],
-      "js": ["dist/content.js"],
-      "css": ["dist/content.css"]
+      "js": ["dist/content.js"]
     }
   ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self';"
-  },
-  "oauth2": {
-    "client_id": "263144475527-5glkr0cdbde0imu9ga2tj4c7mqgasql8.apps.googleusercontent.com",
-    "scopes": [
-      "profile",
-      "email"
-    ]
   }
 }

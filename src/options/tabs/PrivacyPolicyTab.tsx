@@ -10,13 +10,11 @@ const PrivacyPolicyTab = () => {
       <b>1. Information We Collect</b>
       <br/>
       <br/>
-      3 types of information are collected:
+      2 types of information are collected:
       <br/>
-      - Personal Information provided by Google when you log in (email, name).
+      - The API keys you provided to be able to make requests to LLM providers (OpenAI, Gemini or Anthropic).
       <br/>
       - Metadata on your database when we extract the structure of your database (table names, column names, etc).
-      <br/>
-      - Usage data (the prompts you use, the database errors you want to fix/explain, the answers given by the LLM).
       <br/>
       We do NOT collect any data contained in your database.
       <br/>
@@ -24,9 +22,7 @@ const PrivacyPolicyTab = () => {
       <b>2. How We Use Your Information</b>
       <br/>
       <br/>
-      Metabase Copilot does not share any of your data with anyone.
-      <br/>
-      We may however use your data to improve our service. For instance, we may update our system prompts based on the quality of the answers given by the LLM to your questions.
+      Metabase Copilot does not share any of your data with anyone apart from the LLM provider you selected (when making requests to it).
     </Description>
   );
 }

@@ -7,21 +7,25 @@ import databaseErrorExplainButtonElement from '../components/databaseErrorExplai
 import databaseErrorFixButtonElement from '../components/databaseErrorFixButtonElement'
 import databaseErrorPopupElement from '../components/databaseErrorPopupElement'
 import feedbackMessageElement from '../components/feedbackMessageElement'
+import { cleanupPopup } from '../components/promptQueryPopupElement'
 
 import pasteTextIntoElement from '../utils/pasteTextIntoElement'
 import deleteTextInputElement from '../utils/deleteTextInputElement'
 import getComponentIdFromVariable from '../utils/getComponentIdFromVariable'
 
-import backendStreamingRequest from '../functions/backendStreamingRequest'
-import chatgptStreamingRequest from '../functions/chatgptStreamingRequest'
 import {
   createPromptQueryMessages,
   createDatabaseErrorExplainPromptMessages,
   createDatabaseErrorFixPromptMessages
-} from '../functions/chatgptInputMessages'
+} from '../functions/createPromptMessages'
 import getRawDatabaseSchema from '../functions/getRawDatabaseSchema'
-import getFormattedDatabaseSchema from '../functions/getFormattedDatabaseSchema'
+import {createDefaultDatabaseSchemaOptions} from '../functions/createDefaultDatabaseSchemaOptions'
+import { getConfigDict } from '../functions/getConfigDict'
 import getMetabaseVersion from '../functions/getMetabaseVersion'
+import {adaptDatabaseSchemaOptions} from '../functions/adaptDatabaseSchemaOptions'
+import {selectDefaultTablesDatabaseSchemaOptions} from '../functions/selectDefaultTablesDatabaseSchemaOptions'
+import {createFormattedDatabaseSchema} from '../functions/createFormattedDatabaseSchema'
+import {wrapLlmCall} from '../functions/wrapLlmCall'
 
 import getEditorOpenedElement from '../page_elements/getEditorOpenedElement'
 import getErrorWarningElement from '../page_elements/getErrorWarningElement'
@@ -30,25 +34,12 @@ import getVisualizationRootElement from '../page_elements/getVisualizationRootEl
 import getEditorTopBar from '../page_elements/getEditorTopBar'
 
 import { ConfigDict } from '../types/chromeStorage'
-import { UserData } from '../types/backendApi'
 
-import functions from '../firebase/functions'
-
-import { storageKeyOptionsTab } from '../constants/chromeStorage'
-
-import openOptionsPage from '../chromeMessaging/openOptionsPage'
-import getAuthToken from '../chromeMessaging/getAuthToken'
-
-import { storageKeyLocalConfig } from '../constants/chromeStorage'
-
-import { cleanupPopup } from '../components/promptQueryPopupElement'
+import { storageKeyLocalConfig, defaultConfigDict } from '../constants/chromeStorage'
 
 
 ////////////// global variables //////////////
 
-
-let configDict: ConfigDict = {};
-let user: UserData | null = null;
 
 // store
 let storeQueryContent: string | undefined = undefined;
@@ -97,8 +88,6 @@ function setStoreListener(): void {
 
 function setupElements() {
 
-  console.log("setupElements");
-
   function onElementAddedOrRemoved() {
     setupQueryEditingElements();
     setupErrorExplainElements();
@@ -122,10 +111,7 @@ function setupElements() {
       const editorTopBar = getEditorTopBar(version)
       updateQueryContainerElement.appendChild(revertQueryButtonElement);
       updateQueryContainerElement.appendChild(promptQueryButtonElement);
-      if (!user || !user.role || user.role === "admin" || user.role === "developer") {
-        updateQueryContainerElement.appendChild(updateSchemaExtractionElement);
-        updateSchemaExtractionElement.setAttribute("schema_extracted_at", configDict?.schemaExtractedAt);
-      }
+      updateQueryContainerElement.appendChild(updateSchemaExtractionElement);
       editorTopBar.insertBefore(updateQueryContainerElement, editorTopBar.firstChild);
     }
   }
@@ -182,7 +168,7 @@ function setupElements() {
   });
   updateSchemaExtractionElement.addEventListener('click', function(event) {
     event.stopPropagation();
-    onClickUpdateDatabasesSchema()
+    onClickUpdateRawDatabasesSchema()
   })
   revertQueryButtonElement.addEventListener('click', function(event) {
     mainRevertQuery()
@@ -233,25 +219,21 @@ function setupElements() {
 ////////////// Query-edition functions //////////////
 
 function mainPromptQuery() {
-  console.log("mainPromptQuery called");
 
   if (isOperationRunning) {
-    console.log("Operation running, aborting");
     return;
   }
 
   // If popup is already open, close it and return
   const existingPopup = document.getElementById(getComponentIdFromVariable({promptQueryPopupElement}));
   if (existingPopup) {
-    console.log("Popup already exists, closing it");
     cleanupPopup();
     return;
   }
 
   // Get latest configDict to ensure we have the most recent position
-  chrome.storage.local.get([storageKeyLocalConfig], function(result) {
-    const latestConfigDict = result[storageKeyLocalConfig] || {};
-    const savedPosition = latestConfigDict.popupPosition;
+  getConfigDict().then((configDict) => {
+    const savedPosition = configDict.popupPosition;
     
     // Get viewport dimensions
     const viewportWidth = window.innerWidth;
@@ -263,11 +245,9 @@ function mainPromptQuery() {
     let top: number;
 
     if (savedPosition && typeof savedPosition.left === 'number' && typeof savedPosition.top === 'number') {
-      console.log("Restoring saved position", savedPosition);
       // Ensure the popup stays within viewport bounds
       left = Math.min(Math.max(0, savedPosition.left), viewportWidth - popupWidth);
       top = Math.min(Math.max(0, savedPosition.top), viewportHeight - popupHeight);
-      console.log("Adjusted position for viewport", { left, top });
     } else {
       // Position below the button if no saved position
       const button = document.getElementById(getComponentIdFromVariable({promptQueryButtonElement}));
@@ -281,9 +261,7 @@ function mainPromptQuery() {
         // Ensure default position stays within viewport bounds
         left = Math.min(Math.max(0, left), viewportWidth - popupWidth);
         top = Math.min(Math.max(0, top), viewportHeight - popupHeight);
-        console.log("Setting default position", { left, top });
       } else {
-        console.log("Prompt button not found, using center position");
         left = (viewportWidth - popupWidth) / 2;
         top = (viewportHeight - popupHeight) / 2;
       }
@@ -294,9 +272,9 @@ function mainPromptQuery() {
     promptQueryPopupElement.style.transform = 'none';
 
     document.body.appendChild(promptQueryPopupElement);
-    console.log("Popup appended to body");
     
-    promptQueryPopupElement.focus();
+    const textarea = promptQueryPopupElement.querySelector('textarea');
+    textarea.focus();
     promptQueryPopupElement.addEventListener('keypress', onPressEnterInsideElement);
   });
 
@@ -307,25 +285,28 @@ function mainPromptQuery() {
       isOperationRunning = true;
       pushPreviousQueryContent();
       const textarea = promptQueryPopupElement.querySelector('textarea');
-      if (user) {
-        const payload = {
-          userPrompt: textarea.value,
-          existingQuery: storeQueryContent,
-          databaseId: storeDatabaseSelected,
+      getConfigDict().then((configDict) => {
+        configDict = configDict;
+        if (configDict.providers[configDict.providerSelected].status === 'valid') {
+          const [systemMessage, promptMessages] = createPromptQueryMessages(
+            storeQueryContent,
+            textarea.value,
+            configDict.formattedDatabaseSchema[storeDatabaseSelected]
+          );
+          wrapLlmCall(
+            configDict,
+            systemMessage,
+            promptMessages,
+            onApiResponseData,
+            onApiRequestError
+          );
+        } else if (
+          configDict.providers[configDict.providerSelected].status === 'error'
+          || configDict.providers[configDict.providerSelected].status === 'invalid'
+        ) {
+          onApiRequestError("Your API key is invalid. Please enter a valid API key in the extension popup.");
         }
-        backendStreamingRequest('api/writeQuery', payload, onApiResponseData, onApiRequestError);
-      } else if (configDict.status === 'valid') {
-        const promptMessages = createPromptQueryMessages(
-          storeQueryContent,
-          textarea.value,
-          configDict.schema[storeDatabaseSelected]
-        );
-        chatgptStreamingRequest(configDict, promptMessages, onApiResponseData, onApiRequestError);
-      } else if (configDict.status === 'error' || configDict.status === 'invalid') {
-        onApiRequestError("Your API key is invalid. Please enter a valid API key in the extension popup or sign in.");
-      } else {
-        onApiRequestError("Sign in with the extension popup to use Metabase Copilot");
-      }
+      });
     }
   };
 
@@ -410,27 +391,29 @@ function mainDatabaseErrorFix() : void {
     databaseErrorPopupElement.remove();
   }
 
-  if (user) {
-    pushPreviousQueryContent();
-    const payload = {
-      existingQuery: storeQueryContent,
-      databaseError: storeQueryError,
-      databaseId: storeDatabaseSelected,
+  getConfigDict().then((configDict) => {
+    configDict = configDict;
+    if (configDict.providers[configDict.providerSelected].status === 'valid') {
+      pushPreviousQueryContent();
+      const [systemMessage, promptMessages] = createDatabaseErrorFixPromptMessages(
+        storeQueryContent,
+        storeQueryError,
+        configDict.formattedDatabaseSchema[storeDatabaseSelected]
+      );
+      wrapLlmCall(
+        configDict,
+        systemMessage,
+        promptMessages,
+        onApiResponseData,
+        onApiRequestError
+      );
+    } else if (
+      configDict.providers[configDict.providerSelected].status === 'error'
+      || configDict.providers[configDict.providerSelected].status === 'invalid'
+    ) {
+      onApiRequestError("Your API key is invalid. Please enter a valid API key in the extension popup.");
     }
-    backendStreamingRequest("api/fixDatabaseError", payload, onApiResponseData, onApiRequestError);
-  } else if (configDict.status === 'valid') {
-    pushPreviousQueryContent();
-    const promptMessages = createDatabaseErrorFixPromptMessages(
-      storeQueryContent,
-      storeQueryError,
-      configDict.schema[storeDatabaseSelected]
-    );
-    chatgptStreamingRequest(configDict, promptMessages, onApiResponseData, onApiRequestError);
-  } else if (configDict.status === 'error' || configDict.status === 'invalid') {
-    onApiRequestError("Your API key is invalid. Please enter a valid API key in the extension popup or sign in.");
-  } else {
-    onApiRequestError("Sign in with the extension popup to use Metabase Copilot");
-  }
+  });
 }
 
 
@@ -471,78 +454,88 @@ function mainDatabaseErrorExplain() : void {
     visualizationRootElement.appendChild(databaseErrorPopupElement);
   }
 
-  if (user) {
-    const payload = {
-      existingQuery: storeQueryContent,
-      databaseError: storeQueryError,
-      databaseId: storeDatabaseSelected,
+  getConfigDict().then((configDict) => {
+    configDict = configDict;
+    if (configDict.providers[configDict.providerSelected].status === 'valid') {
+      const [systemMessage, promptMessages] = createDatabaseErrorExplainPromptMessages(
+        storeQueryContent,
+        storeQueryError,
+        configDict.formattedDatabaseSchema[storeDatabaseSelected]
+      );
+      wrapLlmCall(
+        configDict,
+        systemMessage,
+        promptMessages,
+        onApiResponseData,
+        onApiRequestError
+      );
+    } else if (
+      configDict.providers[configDict.providerSelected].status === 'error'
+      || configDict.providers[configDict.providerSelected].status === 'invalid'
+    ) {
+      onApiRequestError("Your API key is invalid. Please enter a valid API key in the extension popup.");
     }
-    backendStreamingRequest("api/explainDatabaseError", payload, onApiResponseData, onApiRequestError);
-  } else if (configDict.status === 'valid') {
-    const promptMessages = createDatabaseErrorExplainPromptMessages(
-      storeQueryContent,
-      storeQueryError,
-      configDict.schema[storeDatabaseSelected]
-    );
-    chatgptStreamingRequest(configDict, promptMessages, onApiResponseData, onApiRequestError);
-  } else if (configDict.status === 'error' || configDict.status === 'invalid') {
-    onApiRequestError("Your API key is invalid. Please enter a valid API key in the extension popup or sign in.");
-  } else {
-    onApiRequestError("Sign in with the extension popup to use Metabase Copilot");
-  }
+  });
 }
 
 
 ////////////// databases schema things //////////////
 
 
-function onClickUpdateDatabasesSchema(): void {
+function onClickUpdateRawDatabasesSchema(): void {
   if (isOperationRunning) {
     return;
   }
-  if (!user && configDict.status !== 'valid') {
-    setFeedbackMessage("Your API key is invalid. Please enter a valid API key in the extension popup or sign in", "error");
-    return;
-  }
-  isOperationRunning = true;
-  updateSchemaExtractionElement.setAttribute("animate", "true");
-  setFeedbackMessage("Extracting the database schema structure, please do not close this page.", "success");
-  updateDatabasesSchema().then(response => {
-    updateSchemaExtractionElement.setAttribute("animate", "false");
-    feedbackMessageElement.remove();
-    if (configDict.schemaExtractedAt) {
-      updateSchemaExtractionElement.setAttribute("schema_extracted_at", configDict.schemaExtractedAt);
+  getConfigDict().then((configDict) => {
+    configDict = configDict;
+    if (configDict.providers[configDict.providerSelected].status !== 'valid') {
+      setFeedbackMessage("Your API key is invalid. Please enter a valid API key in the extension popup.", "error");
+      return;
     }
-    if (user) {
-      chrome.storage.local.set({ [storageKeyOptionsTab]: "databaseSchema" }, () => {
-        openOptionsPage();
-      });
-    }
-    isOperationRunning = false;
-  }).catch(error => {
-    setFeedbackMessage(error.message, "error");
-    updateSchemaExtractionElement.setAttribute("animate", "false");
-    isOperationRunning = false;
+    isOperationRunning = true;
+    updateSchemaExtractionElement.setAttribute("animate", "true");
+    setFeedbackMessage("Extracting the database schema structure, please do not close this page.", "success");
+    updateRawDatabasesSchema().then(response => {
+      updateSchemaExtractionElement.setAttribute("animate", "false");
+      feedbackMessageElement.remove();
+      if (configDict.rawDatabaseSchemaExtractedAt) {
+        updateSchemaExtractionElement.setAttribute("schema_extracted_at", configDict.rawDatabaseSchemaExtractedAt);
+      }
+      chrome.runtime.sendMessage({ action: 'openOptionsPage' });
+      isOperationRunning = false;
+    }).catch(error => {
+      setFeedbackMessage(error.message, "error");
+      updateSchemaExtractionElement.setAttribute("animate", "false");
+      isOperationRunning = false;
+    });
   });
 }
 
 
-async function updateDatabasesSchema(): Promise<void> {
+async function updateRawDatabasesSchema(): Promise<void> {
   const rawDatabaseSchema = await getRawDatabaseSchema();
-  if (user) {
-    const token = await getAuthToken();
-    try {
-      await functions.callFunction('api/updateRawDatabaseSchema', token, "POST", rawDatabaseSchema);
-    } catch (error) {
-      console.error("Error updating raw database schema", error.message);
-      throw new Error(error.message);
-    }
+  const configDict = await getConfigDict();
+  
+  configDict.rawDatabaseSchema = rawDatabaseSchema;
+  configDict.rawDatabaseSchemaExtractedAt = new Date().toLocaleDateString("ja-JP");
+  
+  const defaultDatabaseSchemaOptions = createDefaultDatabaseSchemaOptions(rawDatabaseSchema);
+  if (configDict.databaseSchemaOptions) {
+    configDict.databaseSchemaOptions = adaptDatabaseSchemaOptions(
+      configDict.databaseSchemaOptions,
+      defaultDatabaseSchemaOptions
+    );
   } else {
-    const schema = await getFormattedDatabaseSchema(rawDatabaseSchema);
-    configDict.schema = schema;
-    configDict.schemaExtractedAt = new Date().toLocaleDateString("ja-JP");
-    chrome.storage.local.set({ [storageKeyLocalConfig]: configDict });
+    try {
+      configDict.databaseSchemaOptions = await selectDefaultTablesDatabaseSchemaOptions(defaultDatabaseSchemaOptions, configDict);
+    } catch (error) {
+      console.error("Error selecting default tables", error);
+      configDict.databaseSchemaOptions = defaultDatabaseSchemaOptions;
+    }
   }
+  
+  configDict.formattedDatabaseSchema = createFormattedDatabaseSchema(configDict.databaseSchemaOptions);
+  chrome.storage.local.set({ [storageKeyLocalConfig]: configDict });
 }
 
 
@@ -572,8 +565,6 @@ function setFeedbackMessage(message: string, type: string) {
 
 function main() {
 
-  console.log("main");
-
   if (isContentScriptLoaded) {
     return;
   }
@@ -583,30 +574,14 @@ function main() {
     version = response;
   })
 
-  getAuthToken().then(authToken => {
-    if (authToken) {
-      functions.callFunction('api/getUser', authToken, "GET").then(response => {
-        user = response;
-        setStoreListener();
-        setupElements();
-        if (!user?.formattedDatabaseSchema) {
-          onClickUpdateDatabasesSchema();
-        }
-      }).catch(error => {
-        console.error("Error getting user", error);
-        setFeedbackMessage("Could not retrieve your user profile, sorry. Please refresh the page", "error");
-      });
-    } else {
-      setStoreListener();
-      setupElements();
-      chrome.storage.local.get([storageKeyLocalConfig], function(result) {
-        if (result[storageKeyLocalConfig]) {
-          configDict = result[storageKeyLocalConfig];
-          if (!configDict.schema) {
-            onClickUpdateDatabasesSchema();
-          }
-        }
-      });
+  setStoreListener();
+  setupElements();
+  getConfigDict().then((configDict) => {
+    if (
+      !configDict.databaseSchemaOptions
+      && configDict.providers[configDict.providerSelected].status === 'valid'
+    ) {
+      onClickUpdateRawDatabasesSchema();
     }
   });
 }

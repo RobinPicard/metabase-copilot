@@ -15,19 +15,9 @@ Metabase Copilot has 3 main features:
 
 Download the extension in the Chrome webstore: https://chrome.google.com/webstore/detail/metabase-chatgpt/kkkpnhdoamjghmnjpailmpndjlegkmnh
 
-Click on the extension's icon on top of your browser's window (on the right of the url bar). Then it will open the extension's popup in which you'll be presented with the settings. There, you can choose between 2 ways of using the extension:
-- logged-in mode
-- local mode
+Click on the extension's icon on top of your browser's window (on the right of the url bar). Then it will open the extension's popup in which you'll be presented with the settings. There, you will be asked to choose an LLM provider and a model, and to enter an API key for the provider you selected.
 
-After you've either logged in or provided your OpenAI API key, the database schema extraction will be automatically run when you first open the native query editor of Metabase. Once this is done, you'll be able to use the extension.
-
-### Logged-in mode
-
-In this mode, you have to log in with Google in the extension's popup. A part of the operations of the extension will be run in a server (not open source). This mode includes both a free tier and a paid tier. The free tier has a daily rate limit. The paid tier is made for companies that want to provide the extension to several users. It has no rate limit and includes the ability to define a single set of database schema options.
-
-### Local mode
-
-In this mode, the extension is run locally (everything related to it is in this repository). You must provide an OpenAI API key in the extension's popup. Upon submitting it, a test request will be made to OpenAI to check its validity. You will also have to choose the model you want to use (gpt-4o or gpt-4o-mini).
+After you've provided an API key, the database schema extraction will be automatically run when you first open the native query editor of Metabase. Once this is done, you'll be able to use the extension.
 
 ## Development
 

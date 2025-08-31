@@ -3,7 +3,7 @@ interface databaseSchema {
   tables: string;
 };
 
-export function createPromptQueryMessages(initialQuery: string, promptMessage: string, databaseSchema: databaseSchema) : Array<Object> {
+export function createPromptQueryMessages(initialQuery: string, promptMessage: string, databaseSchema: databaseSchema): [string, string[]] {
   var systemMessage = (
     "You are SQL writing assistant. Your objective is to write a SQL to answer the question of the user. "
     + "You should respond only with a SQL query, without any additional text message or comment. "
@@ -14,15 +14,15 @@ export function createPromptQueryMessages(initialQuery: string, promptMessage: s
     + "- The question from the user to which you must answer with a SQL query.\n"
     + `Write the SQL query such that it can be executed by a ${databaseSchema.engine} engine.`
   )
-  return [
-    {"role": "system", "content": systemMessage},
-    {"role": "user", "content": databaseSchema.tables.slice(0, 440000)}, // make sure not to exceed context window
-    ...(initialQuery ? [{"role": "user", "content": initialQuery}] : []),
-    {"role": "user", "content": promptMessage},
+  const userMessages = [
+    databaseSchema.tables,
+    ...(initialQuery ? [initialQuery] : []),
+    promptMessage,
   ]
+  return [systemMessage, userMessages]
 }
 
-export function createDatabaseErrorExplainPromptMessages(initialQuery: string, errorMessage: string, databaseSchema: databaseSchema) : Array<Object> {
+export function createDatabaseErrorExplainPromptMessages(initialQuery: string, errorMessage: string, databaseSchema: databaseSchema): [string, string[]] {
   var systemMessage = (
     "You are SQL assistant. The user's query caused an error. Your objective is to explain what's wrong with their query. "
     + "You will receive 3 messages.\n"
@@ -33,29 +33,28 @@ export function createDatabaseErrorExplainPromptMessages(initialQuery: string, e
     + "Do your best to be short (no more than 400 characters, ideally 250), go straight to the point."
     + "If possible, tell the user that they would need to change to fix the problem."
   )
-  return [
-    {"role": "system", "content": systemMessage},
-    {"role": "user", "content": databaseSchema.tables},
-    {"role": "user", "content": initialQuery},
-    {"role": "user", "content": errorMessage},
+  const userMessages = [
+    databaseSchema.tables,
+    initialQuery,
+    errorMessage,
   ]
+  return [systemMessage, userMessages]
 }
 
-export function createDatabaseErrorFixPromptMessages(initialQuery: string, errorMessage: string, databaseSchema: databaseSchema) : Array<Object> {
+export function createDatabaseErrorFixPromptMessages(initialQuery: string, errorMessage: string, databaseSchema: databaseSchema): [string, string[]] {
   var systemMessage = (
     "You are SQL assistant. The user's query caused an error. Your objective is to fix the query. "
     + "You will receive 3 messages.\n"
-    + "- A yaml representation of the database of the user.\n"
     + "- The SQL query of the user. "
     + `- The error message returned by the database (it uses a ${databaseSchema.engine} engine).\n`
     + "You should respond only with a SQL query, without any additional text message or comment. "
     + "Do not start your response with ```sql, it should be able to run in "
     + `a ${databaseSchema.engine} engine without any parsing.`
   )
-  return [
-    {"role": "system", "content": systemMessage},
-    {"role": "user", "content": databaseSchema.tables},
-    {"role": "user", "content": initialQuery},
-    {"role": "user", "content": errorMessage},
+  const userMessages = [
+    databaseSchema.tables,
+    initialQuery,
+    errorMessage,
   ]
+  return [systemMessage, userMessages]
 }

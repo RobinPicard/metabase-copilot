@@ -1,67 +1,50 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 
-import {
-  UserData,
-  DatabaseSchemaOptionsData,
-  DatabaseSchemaOptionsDatabaseData,
-  DatabaseSchemaOptionsTableData
-} from '../../types/backendApi'
-import functions from '../../firebase/functions'
 import { Collapse, Checkbox } from 'antd';
-import getFirebaseAuthToken from '../../chromeMessaging/getAuthToken';
+import {
+  ConfigDict,
+  DatabaseSchemaOptionsDatabase,
+  DatabaseSchemaOptionsTable,
+} from '../../types/chromeStorage';
+import { getConfigDict } from '../../functions/getConfigDict';
+import { storageKeyLocalConfig } from '../../constants/chromeStorage';
 
 
 const { Panel } = Collapse;
 
-interface Props {
-  user: UserData;
-  databaseSchemaOptions: DatabaseSchemaOptionsData;
-  setDatabaseSchemaOptions: (options: DatabaseSchemaOptionsData) => void;
-  setFeedbackMessage: (message: [string, "error" | "info" | null]) => void;
-}
 
+const SchemaOptionsTab: React.FC = () => {
+  const [configDict, setConfigDict] = useState<ConfigDict | null>(null);
+  const [feedbackMessage, setFeedbackMessage] = useState<[string | null, "error" | "info" | null]>([null, null]);
+  const feedbackRef = useRef<HTMLDivElement>(null);
 
-const SchemaOptionsTab: React.FC<Props> = ({ user, databaseSchemaOptions, setDatabaseSchemaOptions, setFeedbackMessage }) => {
+  ////////// hooks //////////s
 
-  ////////// hooks //////////
-
+  // Get the config dict upon mounting
   useEffect(() => {
-    if (user.formattedDatabaseSchema) {
-      getDatabaseSchemaOptions();
-    }
-  }, [user.formattedDatabaseSchema]);
+    getConfigDict().then((configDict) => {
+      setConfigDict(configDict);
+    });
+  }, []);
 
-  ////////// backend requests //////////
-
-  // Get the user's data from the backend
-  const getDatabaseSchemaOptions = async () => {
-    try {
-      const token = await getFirebaseAuthToken();
-      const result = await functions.callFunction('api/getDatabaseSchemaOptions', token, "GET");
-      setDatabaseSchemaOptions(result as DatabaseSchemaOptionsData);
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-      setFeedbackMessage(['Could not load the database schema options. Please refresh the page. If the issue persists, reach out to our support.', 'error']);
-    }
-  }
-
-  const saveSchemaOptions = async () => {
-    if (!databaseSchemaOptions) return;
-    try {
-      const token = await getFirebaseAuthToken();
-      const response = await functions.callFunction('api/updateDatabaseSchemaOptions', token, "POST", databaseSchemaOptions);
-      setFeedbackMessage(['Database schema options successfully saved.', 'info']);
-    } catch (error) {
-      console.error('Error saving schema options:', error);
-      setFeedbackMessage(['Could not save the database schema options. Please refresh the page. If the issue persists, reach out to our support.', 'error']);
-    }
-  };
+  // Close the feedback message when clicking outside of it
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (feedbackRef.current && !feedbackRef.current.contains(event.target as Node)) {
+        setFeedbackMessage([null, null]);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   ////////// functions //////////
 
-  const groupTablesBySchema = (tables: DatabaseSchemaOptionsTableData[]) => {
-    const schemas: { [key: string]: DatabaseSchemaOptionsTableData[] } = {};
+  const groupTablesBySchema = (tables: DatabaseSchemaOptionsTable[]) => {
+    const schemas: { [key: string]: DatabaseSchemaOptionsTable[] } = {};
     tables.forEach(table => {
       if (!schemas[table.schema]) {
         schemas[table.schema] = [];
@@ -73,11 +56,17 @@ const SchemaOptionsTab: React.FC<Props> = ({ user, databaseSchemaOptions, setDat
 
   ////////// user interactions //////////
 
+  const saveSchemaOptions = () => {
+    chrome.storage.local.set({ [storageKeyLocalConfig]: configDict }, () => {
+      setFeedbackMessage(["Schema options saved", "info"]);
+    });
+  }
+
   const handleSchemaChange = (databaseId: string, schemaName: string, checked: boolean, event: React.MouseEvent<HTMLElement>) => {
     event.stopPropagation();
-    if (!databaseSchemaOptions) return;
+    if (!configDict?.databaseSchemaOptions) return;
 
-    const updatedOptions = { ...databaseSchemaOptions };
+    const updatedOptions = { ...configDict.databaseSchemaOptions };
     updatedOptions[databaseId].tables = updatedOptions[databaseId].tables.map(table => {
       if (table.schema === schemaName) {
         return { ...table, selected: checked };
@@ -85,13 +74,13 @@ const SchemaOptionsTab: React.FC<Props> = ({ user, databaseSchemaOptions, setDat
       return table;
     });
 
-    setDatabaseSchemaOptions(updatedOptions);
+    setConfigDict({ ...configDict, databaseSchemaOptions: updatedOptions });
   };
 
   const handleTableChange = (databaseId: string, tableId: number, checked: boolean) => {
-    if (!databaseSchemaOptions) return;
+    if (!configDict?.databaseSchemaOptions) return;
 
-    const updatedOptions = { ...databaseSchemaOptions };
+    const updatedOptions = { ...configDict.databaseSchemaOptions };
     updatedOptions[databaseId].tables = updatedOptions[databaseId].tables.map(table => {
       if (table.id === tableId) {
         return { ...table, selected: checked };
@@ -99,12 +88,12 @@ const SchemaOptionsTab: React.FC<Props> = ({ user, databaseSchemaOptions, setDat
       return table;
     });
 
-    setDatabaseSchemaOptions(updatedOptions);
+    setConfigDict({ ...configDict, databaseSchemaOptions: updatedOptions });
   };
 
   ////////// rendering //////////
 
-  const renderTables = (databaseId: string, tables: DatabaseSchemaOptionsTableData[]) => {
+  const renderTables = (databaseId: string, tables: DatabaseSchemaOptionsTable[]) => {
     return tables.map(table => (
       <TableRow key={table.id}>
         <TableName>{table.name}</TableName>
@@ -118,7 +107,7 @@ const SchemaOptionsTab: React.FC<Props> = ({ user, databaseSchemaOptions, setDat
     ));
   };
 
-  const renderSchemas = (databaseId: string, database: DatabaseSchemaOptionsDatabaseData) => {
+  const renderSchemas = (databaseId: string, database: DatabaseSchemaOptionsDatabase) => {
     const schemas = groupTablesBySchema(database.tables);
     return (
       <StyledCollapse>
@@ -154,10 +143,10 @@ const SchemaOptionsTab: React.FC<Props> = ({ user, databaseSchemaOptions, setDat
   };
 
   const renderDatabases = () => {
-    if (!databaseSchemaOptions) return null;
+    if (!configDict?.databaseSchemaOptions) return null;
 
-    return Object.keys(databaseSchemaOptions).map(databaseId => {
-      const database = databaseSchemaOptions[databaseId];
+    return Object.keys(configDict.databaseSchemaOptions).map(databaseId => {
+      const database = configDict.databaseSchemaOptions[databaseId];
       const totalTokens = database.tables
         .filter(table => table.selected)
         .reduce((sum, table) => sum + (table.numberTokens || 0), 0)
@@ -181,12 +170,12 @@ const SchemaOptionsTab: React.FC<Props> = ({ user, databaseSchemaOptions, setDat
   return (
     <Root>
       {
-        !user.formattedDatabaseSchema ? (
+        !configDict?.formattedDatabaseSchema ? (
           <NoDatabaseSchemaMessage>
             You first need to extract the database schema to able to update the options.<br/><br/>
-            Go to the native query editor of Metabase to automatically extract the schema.
+            To do so, make sure you submitted a valid API key for the provider you selected and go to the native query editor of Metabase to automatically extract the schema.
           </NoDatabaseSchemaMessage>
-        ) : databaseSchemaOptions ? (
+        ) : configDict?.databaseSchemaOptions ? (
           <>
             <Description>
               Only select the schemas and tables you want to be included in the context provided to the LLM.
@@ -204,6 +193,18 @@ const SchemaOptionsTab: React.FC<Props> = ({ user, databaseSchemaOptions, setDat
           <div></div>
         )
       }
+
+      {feedbackMessage[0] && (
+        <FeedbackMessage ref={feedbackRef} className={feedbackMessage[1]}>
+          <FeedbackText className={feedbackMessage[1]}>{feedbackMessage[0]}</FeedbackText>
+          <CloseButton onClick={() => setFeedbackMessage([null, null])}>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1 1L11 11M1 11L11 1" stroke="#721c24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </CloseButton>
+        </FeedbackMessage>
+      )}
+
     </Root>
   );
 }
@@ -338,5 +339,63 @@ const StyledCheckbox = styled(Checkbox)`
     transition: all 0.1s ease-out;
   }
 `;
+
+
+
+
+const FeedbackMessage = styled.div`
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  border-radius: 4px;
+  padding: 10px;
+  max-width: 300px;
+  z-index: 1000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex;
+
+  &.error {
+    background-color: var(--light-red);
+    border: 1px solid var(--dark-red);
+  }
+
+  &.info {
+    background-color: var(--light-blue);
+    border: 1px solid var(--dark-blue);
+  }
+`;
+
+const FeedbackText = styled.p`
+  margin: 0;
+  font-size: 14px;
+
+  &.error {
+    color: var(--dark-red);
+  }
+
+  &.info {
+    color: var(--black);
+  }
+`;
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover svg path {
+    stroke: #5a1720;
+  }
+`;
+
+
+
 
 export default SchemaOptionsTab;

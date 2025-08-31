@@ -20,19 +20,20 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.57.0",
+    "@google/generative-ai": "^0.24.1",
     "antd": "^5.21.0",
-    "dotenv-webpack": "^8.1.0",
     "eventsource-polyfill": "^0.9.6",
     "file-loader": "^6.2.0",
+    "js-tiktoken": "^1.0.21",
     "js-yaml": "^4.1.0",
+    "openai": "^5.11.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "styled-components": "^6.1.13"
   },
   "scripts": {
-    "build:dev": "NODE_ENV=development node build-manifest.js && FIREBASE_ENV=dev webpack --mode production",
-    "build:prod": "NODE_ENV=production node build-manifest.js && FIREBASE_ENV=prod webpack --mode production",
-    "bundle": "zip bundle.zip -r manifest.json chrome_icons dist",
-    "start": "NODE_ENV=development node build-manifest.js && webpack serve --mode development"
+    "build": "npx webpack --mode production",
+    "bundle": "zip bundle.zip -r manifest.json chrome_icons dist"
   }
 }
