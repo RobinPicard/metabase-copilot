@@ -1,4 +1,11 @@
-export const storageKeyLocalConfig = 'metabaseCopilotLocalConfig';
-export const storageKeyLocalConfigOld = 'metabase_chatgpt_extension';
-export const storageKeyOptionsTab = 'metabaseCopilotOptionsTab';
-export const storageKeyAuthUser = 'metabaseCopilotAuthUser';
+export const storageKeyLocalConfig = 'metabaseCopilotLocalConfigNew';
+export const storageKeyLocalConfigOld = 'metabaseCopilotLocalConfig';
+
+export const defaultConfigDict = {
+  providerSelected: "openai",
+  providers: {
+    openai: {},
+    anthropic: {},
+    gemini: {},
+  }
+};

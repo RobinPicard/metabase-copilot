@@ -1,68 +1,17 @@
-export interface RawDatabase {
-  id: number;
-  name: string;
-  engine: string;
-  tables: RawTable[];
-}
+import {
+  RawDatabaseSchemaRoot,
+  RawDatabase,
+  RawTable,
+  RawColumn,
+} from '../types/chromeStorage';
+import {
+  DatabaseResponse,
+  DatabaseTableReponse,
+  TableResponse,
+} from '../types/metabaseResponses';
 
-export interface RawTable {
-  id: number;
-  description: string | undefined;
-  name: string;
-  schema: string;
-  fields: RawColumn[];
-}
 
-export interface RawColumn {
-  id: number;
-  name: string;
-  description?: string;
-  base_type: string;
-  database_type: string;
-  effective_type: string;
-  semantic_type: string;
-  target_table_id?: number;
-  target_column_id?: number;
-}
-
-interface DatabaseResponse {
-  id: number;
-  engine: string;
-  is_saved_questions: boolean;
-  name: string;
-  tables: DatabaseTableReponse[];
-}
-
-interface DatabaseTableReponse {
-  id: number;
-  active: boolean;
-}
-
-interface TableResponse {
-  id: number;
-  description?: string;
-  name: string;
-  schema: string;
-  fields: ColumnResponse[];
-}
-
-interface ColumnResponse {
-  id: number;
-  active: boolean;
-  description?: string;
-  name: string;
-  target?: {
-    table_id: number;
-    id: number;
-  };
-  database_type: string;
-  base_type: string;
-  effective_type: string;
-  semantic_type: string;
-  visibility_type: string;
-}
-
-async function getRawDatabaseSchema(): Promise<RawDatabase[]> {
+async function getRawDatabaseSchema(): Promise<RawDatabaseSchemaRoot> {
   const rawSchemas: RawDatabase[] = [];
   try {
     const databasesResponse = await apiGetRequest('/api/database?include=tables');
@@ -76,7 +25,7 @@ async function getRawDatabaseSchema(): Promise<RawDatabase[]> {
         id: database.id,
         name: database.name,
         engine: database.engine,
-        tables: await getTables(database.tables),
+        tables: await getTables(database.tables as DatabaseTableReponse[]),
       };
 
       rawSchemas.push(rawDatabase);
@@ -111,7 +60,7 @@ async function getTables(databaseTables: DatabaseTableReponse[]): Promise<RawTab
             semantic_type: field.semantic_type,
             target_table_id: field.target?.table_id,
             target_column_id: field.target?.id,
-          })),
+          } as RawColumn)),
       };
       tables.push(rawTable);
     } catch (error) {

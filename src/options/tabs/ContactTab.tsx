@@ -4,7 +4,7 @@ import styled from "styled-components";
 const ContactTab = () => {
   return (
     <Description>
-      For any questions, please contact us at <b>metabasecopilot@gmail.com</b>.<br/><br/>
+      For any questions, please open an issue in the Metabase Copilot <a href="https://github.com/RobinPicard/metabase-copilot/issues">GitHub repository</a>.<br/><br/>
       If you are reporting a bug, please include as much detail as possible.
     </Description>
   );

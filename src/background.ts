@@ -1,11 +1,3 @@
-import {
-  getAuthTokenActionName,
-  signInActionName,
-  signOutActionName,
-  openOptionsPageActionName
-} from './constants/chromeMessaging';
-
-
 type RemoveInfo = {};
 
 type Details = {
@@ -50,56 +42,9 @@ chrome.webNavigation.onBeforeNavigate.addListener((details: Details) => {
   injectedTabs.delete(details.tabId);
 });
 
-
-//////////////////// authentication ////////////////////
-
-
-// Modify the message listener
+// Add message listener for opening options page
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-
-  if (message.action === getAuthTokenActionName) {
-    chrome.identity.getAuthToken({ interactive: false }, async (token) => {
-      if (token) {
-        sendResponse({token: token});
-      } else {
-        sendResponse({});
-      }
-    });
-    return true;
-  }
-  else if (message.action === signInActionName) {
-    chrome.identity.getAuthToken({ interactive: true }, async (token) => {
-      if (token) {
-        sendResponse({token: token});
-      } else {
-        sendResponse({});
-      }
-    });
-    return true;
-  }
-  else if (message.action === signOutActionName) {
-    chrome.identity.getAuthToken({ interactive: false }, (token) => {
-      console.log("signOutActionName, token", token);
-      if (chrome.runtime.lastError || !token) {
-        sendResponse({});
-        return;
-      }
-      const revokeUrl = `https://accounts.google.com/o/oauth2/revoke?token=${token}`;
-      fetch(revokeUrl)
-        .then(() => {
-          chrome.identity.removeCachedAuthToken({ token }, () => {
-            console.log("signOutActionName, removed token");
-            sendResponse({});
-          });
-        })
-        .catch(error => {
-          console.error('Error revoking token:', error);
-          sendResponse({});
-        });
-    });
-    return true;
-  }
-  else if (message.action === openOptionsPageActionName) {
+  if (message.action === 'openOptionsPage') {
     chrome.runtime.openOptionsPage();
-  } 
+  }
 });

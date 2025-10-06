@@ -2,15 +2,13 @@ We are committed to protecting your privacy and ensuring transparency about how 
 
 1. Information We Collect
 
-3 types of information are collected:
-- Personal Information provided by Google when you log in (email, name).
+2 types of information are collected:
+
+- The API keys you provided to be able to make requests to LLM providers (OpenAI, Gemini or Anthropic).
 - Metadata on your database when we extract the structure of your database (table names, column names, etc).
-- Usage data (the prompts you use, the database errors you want to fix/explain, the answers given by the LLM).
 
 We do NOT collect any data contained in your database.
 
 2. How We Use Your Information
 
-Metabase Copilot does not share any of your data with anyone.
-We may however use your data to improve our service.
-For instance, we may update our system prompts based on the quality of the answers given by the LLM to your questions.
+Metabase Copilot does not share any of your data with anyone apart from the LLM provider you selected (when making requests to it).
